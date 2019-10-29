@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = "0.1.0"
 
 import asyncio
 import concurrent.futures
@@ -50,7 +50,7 @@ class PpnDB(compose.Struct):
         return self
 
 
-ppns = PpnDB.frompath('ppns.dbm')
+ppns = PpnDB.frompath("ppns.dbm")
 
 
 def run(func, *args):
@@ -136,7 +136,7 @@ class NextHandler(tornado.web.RequestHandler):
 
 class PassHandler(tornado.web.RequestHandler):
     async def get(self, ppn):
-        ppns[ppn] = 'null'
+        ppns[ppn] = "null"
         self.write(next(ppns))
 
 
@@ -149,15 +149,17 @@ class SubmitHandler(tornado.web.RequestHandler):
 
 
 def main():
-    application = tornado.web.Application([
-        (r"/ppn/(.*)", PPNHandler),
-        (r"/text/(.*)", TextHandler),
-        (r"/nli/(.*)", NLIQueryHandler),
-        (r"/next/", NextHandler),
-        (r"/pass/(.*)", PassHandler),
-        (r"/submit/(.*)", SubmitHandler),
-        # (r"/(.*)", tornado.web.StaticFileHandler),
-    ])
+    application = tornado.web.Application(
+        [
+            (r"/ppn/(.*)", PPNHandler),
+            (r"/text/(.*)", TextHandler),
+            (r"/nli/(.*)", NLIQueryHandler),
+            (r"/next/", NextHandler),
+            (r"/pass/(.*)", PassHandler),
+            (r"/submit/(.*)", SubmitHandler),
+            # (r"/(.*)", tornado.web.StaticFileHandler),
+        ]
+    )
     port = 8888
     print("now servering on", port)
     application.listen(port)

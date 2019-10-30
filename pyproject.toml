@@ -6,9 +6,9 @@ authors = ["Aaron Christianson <ninjaaron@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.5"
-arc = "^1.0"
-deromanize = "^0.9.0"
-compose-struct = "^0.8.0"
+arc = ">=0.0"
+deromanize = ">=0.0.0"
+compose-struct = ">=0.0.0"
 
 [tool.poetry.dev-dependencies]
 

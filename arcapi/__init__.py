@@ -54,7 +54,7 @@ ppns = PpnDB.frompath("ppns.dbm")
 
 
 def run(func, *args):
-    return asyncio.get_running_loop().run_in_executor(func, *args)
+    return asyncio.get_event_loop().run_in_executor(func, *args)
 
 
 def getquery(words):

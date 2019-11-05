@@ -157,7 +157,8 @@ def main():
             (r"/next/", NextHandler),
             (r"/pass/(.*)", PassHandler),
             (r"/submit/(.*)", SubmitHandler),
-            # (r"/(.*)", tornado.web.StaticFileHandler),
+            (r"/", tornado.web.RedirectHandler, {"url": "/index.html"}),
+            (r"/(.*)", tornado.web.StaticFileHandler, {"path": "./static"}),
         ]
     )
     port = 8888

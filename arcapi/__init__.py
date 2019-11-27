@@ -4,7 +4,7 @@ import asyncio
 import concurrent.futures
 import json
 from arc import picaqueries
-from arc import config
+import arc.config
 import deromanize
 import tornado.ioloop
 import tornado.web
@@ -13,7 +13,7 @@ from arc import solrtools
 import compose
 import dbm
 
-from . import config as soup
+from arcapi import config
 
 
 class PpnDB(compose.Struct):
@@ -52,7 +52,7 @@ class PpnDB(compose.Struct):
         return self
 
 
-ppns = PpnDB.frompath(soup.project_dir / "ppns.dbm")
+ppns = PpnDB.frompath(config.project_dir / "ppns.dbm")
 
 
 def run(func, *args):
@@ -64,13 +64,13 @@ def getquery(words):
     return solrtools.join(words, fuzzy=True)
 
 
-def getsession() -> config.Session:
+def getsession() -> arc.config.Session:
     try:
         return getsession._session
     except AttributeError:
         pass
 
-    session = config.Session.fromconfig(asynchro=True)
+    session = arc.config.Session.fromconfig(asynchro=True)
     session.records.session.connection().engine.dispose()
     session.add_decoders(("new", "old"), fix_numerals=True)
     session.add_core("nlibooks")
@@ -167,7 +167,3 @@ def main():
     print("now servering on", port)
     application.listen(port)
     tornado.ioloop.IOLoop.current().start()
-
-
-if __name__ == "__main__":
-    main()

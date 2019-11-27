@@ -13,6 +13,8 @@ from arc import solrtools
 import compose
 import dbm
 
+from . import config as soup
+
 
 class PpnDB(compose.Struct):
     db = ...
@@ -50,7 +52,7 @@ class PpnDB(compose.Struct):
         return self
 
 
-ppns = PpnDB.frompath("ppns.dbm")
+ppns = PpnDB.frompath(soup.project_dir / "ppns.dbm")
 
 
 def run(func, *args):

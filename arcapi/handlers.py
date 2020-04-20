@@ -65,6 +65,16 @@ async def query_nli(words):
     return [jsondecode(d["originalData"]) for d in out["docs"]]
 
 
+def records2results(records):
+    pass
+
+
+class APIHandler(tornado.web.RequestHandler):
+    async def get(self, json_records):
+        result = await records2results([jsondecode(json_records)])
+        self.write(jsonencode(result))
+
+
 class PPNHandler(tornado.web.RequestHandler):
     async def get(self, ppn):
         try:

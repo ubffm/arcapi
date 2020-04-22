@@ -8,10 +8,13 @@ import arc.config
 import deromanize
 import string
 from arc import solrtools
+from typing import List
+
+from libaaron import pipe, pmap
 
 
-def run_in_executor(executor, func, *args):
-    return asyncio.get_event_loop().run_in_executor(executor, func, *args)
+def parallel(pool, func, *args):
+    return asyncio.get_event_loop().run_in_executor(pool, func, *args)
 
 
 def getquery(words):
@@ -36,7 +39,7 @@ def getsession() -> arc.config.Session:
 
 jsondecode = json.JSONDecoder().decode
 jsonencode = json.JSONEncoder(ensure_ascii=False).encode
-executor = concurrent.futures.ProcessPoolExecutor()
+pool = concurrent.futures.ProcessPoolExecutor()
 
 
 def mk_rlist_serializable(rlist: deromanize.ReplacementList):
@@ -65,22 +68,47 @@ async def query_nli(words):
     return [jsondecode(d["originalData"]) for d in out["docs"]]
 
 
-def records2results(records):
+class MalformedRecord(Exception):
     pass
+
+
+def prep_record(record: dict):
+    # mutation
+    for k, v in record.items():
+        if isinstance(v, str):
+            record[k] = [v]
+        elif not isinstance(v, list):
+            raise MalformedRecord(record)
+
+
+def record2replist(record):
+    session = getsession()
+    prep_record(record)
+
+
+def json_records2replists(
+    json_records: str,
+) -> List[deromanize.ReplacementList]:
+    records = jsondecode(json_records)
+    replists = map(record2replist, records)
+    return list(zip(records, replists))
 
 
 class APIHandler(tornado.web.RequestHandler):
     async def get(self, json_records):
-        result = await records2results([jsondecode(json_records)])
+        result = await parallel(pool, json_records2replists, json_records)
         self.write(jsonencode(result))
 
 
 class PPNHandler(tornado.web.RequestHandler):
     async def get(self, ppn):
         try:
-            result = await run_in_executor(executor, ppn2record_and_rlist, ppn)
+            result = await parallel(pool, ppn2record_and_rlist, ppn)
         except KeyError:
-            self.write('{"Error": "No such PPN %s", "type": "PPNError"}' % ppn)
+            self.write(
+                jsonencode({"Error": "No such PPN %s", "type": "PPNError"})
+                % ppn
+            )
             return
 
         self.write(jsonencode(result))
@@ -88,7 +116,7 @@ class PPNHandler(tornado.web.RequestHandler):
 
 class TextHandler(tornado.web.RequestHandler):
     async def get(self, text):
-        result = await run_in_executor(executor, text_to_replists, text)
+        result = await parallel(pool, text_to_replists, text)
         self.write(jsonencode(result))
 
 
@@ -100,7 +128,7 @@ class NLIQueryHandler(tornado.web.RequestHandler):
 
 class TextAndQueryHandler(tornado.web.RequestHandler):
     async def get(self, text):
-        text = await run_in_executor(executor, text_to_replists, text)
+        text = await parallel(pool, text_to_replists, text)
         words = [w["reps"][0] for w in text]
         results = await query_nli(words)
         self.write(jsonencode({"conversion": text, "matches": results}))

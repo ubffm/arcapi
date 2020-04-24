@@ -10,8 +10,6 @@ import string
 from arc import solrtools
 from typing import List
 
-from libaaron import pipe, pmap
-
 
 def parallel(pool, func, *args):
     return asyncio.get_event_loop().run_in_executor(pool, func, *args)
@@ -82,8 +80,8 @@ def prep_record(record: dict):
 
 
 def record2replist(record):
-    session = getsession()
     prep_record(record)
+    rlists = text_to_replists(record["title"][0])
 
 
 def json_records2replists(

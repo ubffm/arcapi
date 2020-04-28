@@ -81,7 +81,7 @@ def prep_record(record: dict):
 
 def record2replist(record):
     prep_record(record)
-    rlists = text_to_replists(record["title"][0])
+    return text_to_replists(record["title"][0])
 
 
 def json_records2replists(
@@ -92,10 +92,30 @@ def json_records2replists(
     return list(zip(records, replists))
 
 
+def words_of_replists(replists):
+    return [w["reps"][0] for w in replists]
+
+
+def rank_results(record, replists, results):
+    pass
+
+
+async def record_with_results(record, replists):
+    results = await query_nli(words_of_replists(replists))
+    return parallel(pool, rank_results, record, replists, results)
+
+
 class APIHandler(tornado.web.RequestHandler):
     async def get(self, json_records):
-        result = await parallel(pool, json_records2replists, json_records)
-        self.write(jsonencode(result))
+        records_n_replists = await parallel(
+            pool, json_records2replists, json_records
+        )
+        sep_sym = "["
+        for record, replists in records_n_replists:
+            self.write(sep_sym)
+            self.write(jsonencode(await record_with_results(record, replists)))
+            sep_sym = "\n,"
+        self.write("\n]")
 
 
 class PPNHandler(tornado.web.RequestHandler):
@@ -127,7 +147,7 @@ class NLIQueryHandler(tornado.web.RequestHandler):
 class TextAndQueryHandler(tornado.web.RequestHandler):
     async def get(self, text):
         text = await parallel(pool, text_to_replists, text)
-        words = [w["reps"][0] for w in text]
+        words = words_of_replists(text)
         results = await query_nli(words)
         self.write(jsonencode({"conversion": text, "matches": results}))
 

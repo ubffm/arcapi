@@ -8,6 +8,7 @@ import arc.config
 import deromanize
 import string
 from arc import solrtools
+from arc.nlitools import solrmarc
 from typing import List
 
 
@@ -96,13 +97,16 @@ def words_of_replists(replists):
     return [w["reps"][0] for w in replists]
 
 
-def rank_results(record, replists, results):
-    pass
-
-
 async def record_with_results(record, replists):
     results = await query_nli(words_of_replists(replists))
-    return parallel(pool, rank_results, record, replists, results)
+    results = await parallel(
+        pool,
+        solrmarc.rank_results,
+        record["creator"],
+        record["date"],
+        replists,
+        results,
+    )
 
 
 class APIHandler(tornado.web.RequestHandler):

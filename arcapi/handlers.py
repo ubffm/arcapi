@@ -1,5 +1,6 @@
 import asyncio
 import concurrent.futures
+import functools
 import json
 import tornado.web
 
@@ -11,9 +12,7 @@ from arc import solrtools
 from arc.nlitools import solrmarc
 from typing import List
 
-
-def parallel(pool, func, *args):
-    return asyncio.get_event_loop().run_in_executor(pool, func, *args)
+nli_template = "https://www.nli.org.il/en/books/NNL_ALEPH{}/NLI"
 
 
 def getquery(words):
@@ -21,24 +20,43 @@ def getquery(words):
     return solrtools.join(words, fuzzy=True)
 
 
-def getsession() -> arc.config.Session:
-    try:
-        return getsession._session
-    except AttributeError:
-        pass
+empty = object()
 
+
+def getter(func):
+    result = empty
+
+    @functools.wraps(func)
+    def wrapper():
+        nonlocal result
+        if result is empty:
+            result = func()
+        return result
+
+    return wrapper
+
+
+@getter
+def getsession() -> arc.config.Session:
     session = arc.config.Session.fromconfig(asynchro=True)
     session.records.session.connection().engine.dispose()
     session.add_decoders(("new", "old"), fix_numerals=True)
     session.add_core("nlibooks")
     session.add_termdict()
-    getsession._session = session
     return session
+
+
+@getter
+def getpool() -> concurrent.futures.ProcessPoolExecutor:
+    return concurrent.futures.ProcessPoolExecutor()
+
+
+def parallel(func, *args):
+    return asyncio.get_event_loop().run_in_executor(getpool(), func, *args)
 
 
 jsondecode = json.JSONDecoder().decode
 jsonencode = json.JSONEncoder(ensure_ascii=False).encode
-pool = concurrent.futures.ProcessPoolExecutor()
 
 
 def mk_rlist_serializable(rlist: deromanize.ReplacementList):
@@ -100,19 +118,25 @@ def words_of_replists(replists):
 async def record_with_results(record, replists):
     results = await query_nli(words_of_replists(replists))
     results = await parallel(
-        pool,
         solrmarc.rank_results,
-        record["creator"],
-        record["date"],
+        record.get("creator"),
+        record.get("date"),
         replists,
         results,
     )
+    title = picaqueries.Title(*solrmarc.gettitle(results[0])).text
+    record["title"].append(title.replace("<<", "{").replace(">>", "}"))
+    for result in results:
+        record.setdefault("relation", []).appende(
+            nli_template.format(results["controlfields"]["001"])
+        )
+    return record
 
 
 class APIHandler(tornado.web.RequestHandler):
     async def get(self, json_records):
         records_n_replists = await parallel(
-            pool, json_records2replists, json_records
+            json_records2replists, json_records
         )
         sep_sym = "["
         for record, replists in records_n_replists:
@@ -125,7 +149,7 @@ class APIHandler(tornado.web.RequestHandler):
 class PPNHandler(tornado.web.RequestHandler):
     async def get(self, ppn):
         try:
-            result = await parallel(pool, ppn2record_and_rlist, ppn)
+            result = await parallel(ppn2record_and_rlist, ppn)
         except KeyError:
             self.write(
                 jsonencode({"Error": "No such PPN %s", "type": "PPNError"})
@@ -138,19 +162,19 @@ class PPNHandler(tornado.web.RequestHandler):
 
 class TextHandler(tornado.web.RequestHandler):
     async def get(self, text):
-        result = await parallel(pool, text_to_replists, text)
+        result = await parallel(text_to_replists, text)
         self.write(jsonencode(result))
 
 
 class NLIQueryHandler(tornado.web.RequestHandler):
     async def get(self, data):
         out = await query_nli(jsondecode(data))
-        self.write("[%s]" % ",".join(out))
+        self.write(jsonencode(out))
 
 
 class TextAndQueryHandler(tornado.web.RequestHandler):
     async def get(self, text):
-        text = await parallel(pool, text_to_replists, text)
+        text = await parallel(text_to_replists, text)
         words = words_of_replists(text)
         results = await query_nli(words)
         self.write(jsonencode({"conversion": text, "matches": results}))

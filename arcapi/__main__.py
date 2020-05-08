@@ -14,6 +14,7 @@ application = tornado.web.Application(
         (r"/next/", handlers.NextHandler),
         (r"/pass/(.*)", handlers.PassHandler),
         (r"/submit/(.*)", handlers.SubmitHandler),
+        (r"/api/(.*)", handlers.APIHandler),
         (r"/", tornado.web.RedirectHandler, {"url": "/index.html"}),
         (
             r"/(.*)",

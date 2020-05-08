@@ -121,14 +121,15 @@ async def record_with_results(record, replists):
         solrmarc.rank_results,
         record.get("creator"),
         record.get("date"),
-        replists,
+        [x["reps"] for x in replists],
         results,
     )
+    results = [r["doc"] for r in results]
     title = picaqueries.Title(*solrmarc.gettitle(results[0])).text
     record["title"].append(title.replace("<<", "{").replace(">>", "}"))
     for result in results:
-        record.setdefault("relation", []).appende(
-            nli_template.format(results["controlfields"]["001"])
+        record.setdefault("relation", []).append(
+            nli_template.format(result["controlfields"]["001"])
         )
     return record
 

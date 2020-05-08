@@ -20,4 +20,4 @@ class ArcClient:
         )
 
     def json(self, method, data):
-        return self.client(method, encode(data))
+        return self.get(method, encode(data))

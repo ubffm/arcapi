@@ -11,7 +11,17 @@ import deromanize
 from deromanize.keygenerator import CombinatorialExplosion
 import string
 from arc.nlitools import solrmarc
-from typing import Mapping, Sequence, NamedTuple
+from typing import (
+    Mapping,
+    Sequence,
+    NamedTuple,
+    Tuple,
+    TypedDict,
+    Union,
+    Dict,
+    List,
+    cast,
+)
 
 
 nli_template = "https://www.nli.org.il/en/books/NNL_ALEPH{}/NLI"
@@ -61,16 +71,21 @@ jsondecode = json.JSONDecoder().decode
 jsonencode = json.JSONEncoder(ensure_ascii=False).encode
 
 
-def split_title(text: str):
+def split_title(text: str) -> Tuple[str, str, str]:
     remainder, _, resp = text.partition(" / ")
     main, _, sub = remainder.partition(" : ")
     return main, sub, resp
 
 
-def mk_rlist_serializable(rlist: deromanize.ReplacementList):
+class RepList(TypedDict):
+    key: str
+    reps: Sequence[str]
+
+
+def mk_rlist_serializable(rlist: deromanize.ReplacementList) -> RepList:
     reps = [str(rep) for rep in rlist[:30]]
     key = rlist.key if isinstance(rlist, deromanize.ReplacementList) else rlist
-    return dict(key=key, reps=reps)
+    return {"key": key, "reps": reps}
 
 
 def text_to_replists(text):
@@ -129,13 +144,14 @@ class NoTitleGiven(Exception):
     pass
 
 
-def prep_record(record: dict):
+def prep_record(record: Dict[str, Union[str, List[str]]]):
     # mutation
     for k, v in record.items():
         if isinstance(v, str):
             record[k] = [v]
         elif not isinstance(v, list):
             raise MalformedRecord(record)
+    return cast(Dict[str, List[str]], record)
 
 
 title_t = "title"
@@ -163,9 +179,9 @@ class TitleReplists(NamedTuple):
     replists: dict
 
 
-def record2replist(record: Mapping[str, Sequence[str]]):
-    prep_record(record)
-    title_type, title = gettitle(record)
+def record2replist(record: Dict[str, Union[str, List[str]]]):
+    record_ = prep_record(record)
+    title_type, title = gettitle(record_)
     title_replists = title_to_replists(title)
     creator_replists = map(person_to_replists, record.get("creator", []))
     return (TitleReplists(title_type, title_replists), list(creator_replists))

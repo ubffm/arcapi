@@ -96,11 +96,13 @@ def text_to_replists(text):
     return [mk_rlist_serializable(rl) for rl in rlists]
 
 
-def title_to_replists(title: str):
-    main, sub, resp = map(text_to_replists, split_title(title))
-    main += sub
-    main += resp
-    return main
+def title_to_replist_subfields(title: str):
+    return solrmarc.RepTitle(
+        *(
+            text_to_replists(t)["reps"] if t else None
+            for t in split_title(title)
+        )
+    )
 
 
 def has_heb(string: str):
@@ -121,7 +123,7 @@ def person_to_replists(person: str):
 def ppn2record_and_rlist(ppn):
     record = getsession().records[ppn]
     title = picaqueries.gettranstitle(record)
-    serializable_rlists = title_to_replists(title.joined)
+    serializable_rlists = text_to_replists(title.joined)
     return dict(record=record.to_dict(), replists=serializable_rlists)
 
 
@@ -182,7 +184,7 @@ class TitleReplists(NamedTuple):
 def record2replist(record: Dict[str, Union[str, List[str]]]):
     record_ = prep_record(record)
     title_type, title = gettitle(record_)
-    title_replists = title_to_replists(title)
+    title_replists = title_to_replist_subfields(title)
     creator_replists = map(person_to_replists, record.get("creator", []))
     return (TitleReplists(title_type, title_replists), list(creator_replists))
 
@@ -202,6 +204,14 @@ def words_of_replists(replists):
     return [w["reps"][0] for w in replists]
 
 
+def words_of_title_replists(title: solrmarc.RepTitle):
+    out = []
+    for field in title:
+        if field:
+            out.extend(word[0] for word in field)
+    return out
+
+
 def error(msg, record, **kwargs):
     return {"error": msg, "record": record, **kwargs}
 
@@ -209,8 +219,8 @@ def error(msg, record, **kwargs):
 async def record_with_results(record, replists_or_error):
     if isinstance(replists_or_error, Exception):
         return error(replists_or_error.__class__.__name__, record)
-    (title_type, replists), creator_replists = replists_or_error
-    words = words_of_replists(replists)
+    (title_type, title_reps), creator_replists = replists_or_error
+    words = words_of_title_replists(title_reps)
     results = await query_nli(words)
     # for result in results:
     #     title = solrmarc.gettitle(result)
@@ -218,7 +228,7 @@ async def record_with_results(record, replists_or_error):
         solrmarc.rank_results,
         record.get("creator", []),
         record.get("date", []),
-        [x["reps"] for x in replists],
+        title_reps,
         results,
     )
 

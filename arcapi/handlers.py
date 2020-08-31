@@ -12,7 +12,6 @@ from deromanize.keygenerator import CombinatorialExplosion
 import string
 from arc.nlitools import solrmarc
 from typing import (
-    Mapping,
     Sequence,
     NamedTuple,
     Tuple,
@@ -77,13 +76,16 @@ def split_title(text: str) -> Tuple[str, str, str]:
     return main, sub, resp
 
 
+Reps = Sequence[str]
+
+
 class RepList(TypedDict):
     key: str
-    reps: Sequence[str]
+    reps: Reps
 
 
 def mk_rlist_serializable(rlist: deromanize.ReplacementList) -> RepList:
-    reps = [str(rep) for rep in rlist[:30]]
+    reps = [str(rep) for rep in rlist[:20]]
     key = rlist.key if isinstance(rlist, deromanize.ReplacementList) else rlist
     return {"key": key, "reps": reps}
 
@@ -117,7 +119,10 @@ def has_heb(string: str):
 def person_to_replists(person: str):
     if not has_heb(person):
         return None
-    return text_to_replists(person)
+    replists = text_to_replists(person)
+    for i, rlist in enumerate(replists):
+        replists[i] = rlist[:5]
+    return replists
 
 
 def ppn2record_and_rlist(ppn):
@@ -225,7 +230,7 @@ async def record_with_results(record, replists_or_error):
     # for result in results:
     #     title = solrmarc.gettitle(result)
     results = await parallel(
-        solrmarc.rank_results,
+        solrmarc.rank_results2,
         record.get("creator", []),
         record.get("date", []),
         title_reps,

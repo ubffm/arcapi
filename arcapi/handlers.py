@@ -101,7 +101,7 @@ def text_to_replists(text):
 def title_to_replist_subfields(title: str):
     return solrmarc.RepTitle(
         *(
-            text_to_replists(t)["reps"] if t else None
+            [r["reps"] for r in text_to_replists(t)] if t else None
             for t in split_title(title)
         )
     )
@@ -121,7 +121,7 @@ def person_to_replists(person: str):
         return None
     replists = text_to_replists(person)
     for i, rlist in enumerate(replists):
-        replists[i] = rlist[:5]
+        replists[i] = rlist["reps"][:5]
     return replists
 
 
@@ -232,6 +232,9 @@ async def record_with_results(record, replists_or_error):
     results = await parallel(
         solrmarc.rank_results2,
         record.get("creator", []),
+        creator_replists,
+        None,  # publish
+        None,  # publisher_reps
         record.get("date", []),
         title_reps,
         results,

@@ -243,13 +243,12 @@ async def record_with_results(record, replists_or_error):
     if not results:
         return error("no matches found", record, best_guess=" ".join(words))
 
-    results = [r["doc"] for r in results]
-    title = picaqueries.Title(*solrmarc.gettitle(results[0])).text
+    title = results[0]["title"]
     heb_title = title.replace("<<", "{").replace(">>", "}")
     record[title_type].append(heb_title)
     for result in results:
         record.setdefault("relation", []).append(
-            nli_template.format(result["controlfields"]["001"])
+            nli_template.format(result["doc"]["controlfields"]["001"])
         )
     return record
 

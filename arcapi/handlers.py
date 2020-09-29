@@ -132,6 +132,11 @@ def ppn2record_and_rlist(ppn):
     return dict(record=record.to_dict(), replists=serializable_rlists)
 
 
+def nli_doc_to_api_doc(doc):
+    decoded = jsondecode(doc["originalData"])
+    return decoded
+
+
 async def query_nli(words):
     try:
         query = getquery(words)

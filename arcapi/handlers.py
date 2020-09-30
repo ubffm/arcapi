@@ -132,11 +132,6 @@ def ppn2record_and_rlist(ppn):
     return dict(record=record.to_dict(), replists=serializable_rlists)
 
 
-def nli_doc_to_api_doc(doc):
-    decoded = jsondecode(doc["originalData"])
-    return decoded
-
-
 async def query_nli(words):
     try:
         query = getquery(words)
@@ -231,10 +226,8 @@ async def record_with_results(record, replists_or_error):
         return error(replists_or_error.__class__.__name__, record)
     (title_type, title_reps), creator_replists = replists_or_error
     words = words_of_title_replists(title_reps)
-    results = await query_nli(words)
-    # for result in results:
-    #     title = solrmarc.gettitle(result)
-    results = await parallel(
+    results = list(map(solrmarc.mk_api_doc, await query_nli(words)))
+    ranked_results = await parallel(
         solrmarc.rank_results2,
         record.get("creator", []),
         creator_replists,
@@ -245,15 +238,22 @@ async def record_with_results(record, replists_or_error):
         results,
     )
 
-    if not results:
-        return error("no matches found", record, best_guess=" ".join(words))
+    if not ranked_results:
+        for result in results:
+            result["title"] = [t.joined() for t in result["title"]]
+        return error(
+            "no matches found",
+            record,
+            best_guess=" ".join(words),
+            results=results,
+        )
 
-    title = results[0]["title"]
+    title = ranked_results[0]["title"]
     heb_title = title.replace("<<", "{").replace(">>", "}")
     record[title_type].append(heb_title)
-    for result in results:
+    for result in ranked_results:
         record.setdefault("relation", []).append(
-            nli_template.format(result["doc"]["controlfields"]["001"])
+            nli_template.format(result["doc"]["identifier"])
         )
     return record
 

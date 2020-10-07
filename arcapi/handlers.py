@@ -132,15 +132,20 @@ def ppn2record_and_rlist(ppn):
     return dict(record=record.to_dict(), replists=serializable_rlists)
 
 
+def prepare_doc(solr_nli_doc):
+    doc = jsondecode(solr_nli_doc["originalData"])
+    doc["allnames"] = solr_nli_doc.get("allnames", [])
+    return doc
+
+
 async def query_nli(words):
     try:
         query = getquery(words)
     except solrtools.EmptyQuery:
         return []
-    out = await getsession().cores.nlibooks.run_query(
-        "alltitles:" + query, fl=["originalData"]
-    )
-    return [jsondecode(d["originalData"]) for d in out["docs"]]
+    out = await getsession().cores.nlibooks.run_query("alltitles:" + query)
+
+    return [prepare_doc(d) for d in out["docs"]]
 
 
 class MalformedRecord(Exception):
@@ -226,7 +231,12 @@ async def record_with_results(record, replists_or_error):
         return error(replists_or_error.__class__.__name__, record)
     (title_type, title_reps), creator_replists = replists_or_error
     words = words_of_title_replists(title_reps)
-    results = list(map(solrmarc.mk_api_doc, await query_nli(words)))
+    results = []
+    for doc in await query_nli(words):
+        try:
+            results.append(solrmarc.mk_api_doc(doc))
+        except solrmarc.NoIdentifier:
+            pass
     ranked_results = await parallel(
         solrmarc.rank_results2,
         record.get("creator", []),
@@ -240,7 +250,7 @@ async def record_with_results(record, replists_or_error):
 
     if not ranked_results:
         for result in results:
-            result["title"] = [t.joined() for t in result["title"]]
+            result["title"] = [t.joined for t in result["title"]]
         return error(
             "no matches found",
             record,

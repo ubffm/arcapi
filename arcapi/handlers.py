@@ -35,7 +35,7 @@ def getquery(words):
 empty = object()
 
 
-def getter(func):
+def execute_once(func):
     result = empty
 
     @functools.wraps(func)
@@ -48,7 +48,7 @@ def getter(func):
     return wrapper
 
 
-@getter
+@execute_once
 def getsession() -> arc.config.Session:
     session = arc.config.Session.fromconfig(asynchro=True)
     session.records.session.connection().engine.dispose()
@@ -58,12 +58,12 @@ def getsession() -> arc.config.Session:
     return session
 
 
-@getter
+@execute_once
 def getpool() -> concurrent.futures.ProcessPoolExecutor:
     return concurrent.futures.ProcessPoolExecutor()
 
 
-def parallel(func, *args):
+def delegate(func, *args):
     return asyncio.get_event_loop().run_in_executor(getpool(), func, *args)
 
 
@@ -195,7 +195,7 @@ class TitleReplists(NamedTuple):
 def record2replist(record: Dict[str, Union[str, List[str]]]):
     record_ = prep_record(record)
     title_type, title = gettitle(record_)
-    title = re.sub(r"^([Hh]\w*-) *@ *", r"\1", title)
+    title = re.sub(r"^{([Hh]\w*-)} *", r"\1", title)
     title_replists = title_to_replist_subfields(title)
     creator_replists = map(person_to_replists, record.get("creator", []))
     return (TitleReplists(title_type, title_replists), list(creator_replists))
@@ -239,7 +239,9 @@ async def record_with_results(record, replists_or_error):
             results.append(solrmarc.mk_api_doc(doc))
         except solrmarc.NoIdentifier:
             pass
-    ranked_results = await parallel(
+        except picaqueries.NoMainTitle:
+            pass
+    ranked_results = await delegate(
         solrmarc.rank_results2,
         record.get("creator", []),
         creator_replists,
@@ -265,14 +267,18 @@ async def record_with_results(record, replists_or_error):
     record[title_type].append(heb_title)
     for result in ranked_results:
         record.setdefault("relation", []).append(
-            nli_template.format(result["doc"]["identifier"])
+            (
+                nli_template.format(result["doc"]["identifier"]),
+                result["diff"],
+                result["criteria"],
+            )
         )
     return record
 
 
 class APIHandler(tornado.web.RequestHandler):
     async def get(self, json_records):
-        records_n_replists = await parallel(
+        records_n_replists = await delegate(
             json_records2replists, json_records
         )
         sep_sym = "["
@@ -290,7 +296,7 @@ class APIHandler(tornado.web.RequestHandler):
 class PPNHandler(tornado.web.RequestHandler):
     async def get(self, ppn):
         try:
-            result = await parallel(ppn2record_and_rlist, ppn)
+            result = await delegate(ppn2record_and_rlist, ppn)
         except KeyError:
             self.write(
                 jsonencode({"Error": "No such PPN %s", "type": "PPNError"})
@@ -303,7 +309,7 @@ class PPNHandler(tornado.web.RequestHandler):
 
 class TextHandler(tornado.web.RequestHandler):
     async def get(self, text):
-        result = await parallel(text_to_replists, text)
+        result = await delegate(text_to_replists, text)
         self.write(jsonencode(result))
 
 
@@ -315,7 +321,7 @@ class NLIQueryHandler(tornado.web.RequestHandler):
 
 class TextAndQueryHandler(tornado.web.RequestHandler):
     async def get(self, text):
-        text = await parallel(text_to_replists, text)
+        text = await delegate(text_to_replists, text)
         words = words_of_replists(text)
         results = await query_nli(words)
         self.write(jsonencode({"conversion": text, "matches": results}))

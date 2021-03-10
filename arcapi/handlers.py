@@ -195,7 +195,7 @@ class TitleReplists(NamedTuple):
 def record2replist(record: Dict[str, Union[str, List[str]]]):
     record_ = prep_record(record)
     title_type, title = gettitle(record_)
-    title = re.sub(r"^{([Hh]\w*-)} *", r"\1", title)
+    title = re.sub(r"^\{([Hh]\w*-)\}\s*", r"\1", title)
     title_replists = title_to_replist_subfields(title)
     creator_replists = map(person_to_replists, record.get("creator", []))
     return (TitleReplists(title_type, title_replists), list(creator_replists))

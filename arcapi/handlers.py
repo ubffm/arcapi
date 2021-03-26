@@ -225,7 +225,21 @@ def words_of_title_replists(title: solrmarc.RepTitle):
 
 
 def error(msg, record, **kwargs):
-    return {"error": msg, "record": record, **kwargs}
+    return {
+        "type": "error",
+        "message": msg,
+        "record": record,
+        **kwargs
+    }
+
+
+def join_title(main, sub, resp):
+    out = [main]
+    if sub:
+        out.extend((":", sub))
+    if resp:
+        out.extend(("/", resp))
+    return " ".join(out)
 
 
 async def record_with_results(record, replists_or_error):
@@ -233,6 +247,10 @@ async def record_with_results(record, replists_or_error):
         return error(replists_or_error.__class__.__name__, record)
     (title_type, title_reps), creator_replists = replists_or_error
     words = words_of_title_replists(title_reps)
+    try:
+        generated_title = join_title(*(" ".join(w[0] for w in r) if r else None for r in title_reps))
+    except TypeError:
+        return error("NoMainTitle", record)
     results = []
     for doc in await query_nli(words):
         try:
@@ -245,7 +263,7 @@ async def record_with_results(record, replists_or_error):
         solrmarc.rank_results2,
         record.get("creator", []),
         creator_replists,
-        None,  # publish
+        None,  # publisher
         None,  # publisher_reps
         record.get("date", []),
         title_reps,
@@ -255,25 +273,29 @@ async def record_with_results(record, replists_or_error):
     if not ranked_results:
         for result in results:
             result["title"] = [t.joined for t in result["title"]]
-        return error(
-            "no matches found",
-            record,
-            best_guess=" ".join(words),
-            results=results,
+        return dict(
+            type="unverified",
+            record=record,
+            converted=generated_title,
+            top_query_result=results[0]["title"] if results else None,
+            creator_replists=creator_replists,
         )
 
-    title = ranked_results[0]["title"]
-    heb_title = title.replace("<<", "{").replace(">>", "}")
-    record[title_type].append(heb_title)
-    for result in ranked_results:
-        record.setdefault("relation", []).append(
-            (
-                nli_template.format(result["doc"]["identifier"]),
-                result["diff"],
-                result["criteria"],
-            )
-        )
-    return record
+    top = ranked_results[0]
+    title = top["title"]
+    heb_title = title.replace("<<", "{", 1).replace(">>", "}", 1)
+    return dict(
+        type="verified",
+        record=record,
+        converted=generated_title,
+        creator_replists=creator_replists,
+        matched_title={
+            "text": heb_title,
+            "link": nli_template.format(top["doc"]["identifier"]),
+            "diff": top["diff"],
+            "criteria": top["criteria"],
+        }
+    )
 
 
 class APIHandler(tornado.web.RequestHandler):

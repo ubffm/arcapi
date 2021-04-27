@@ -25,6 +25,7 @@ from typing import (
 
 
 nli_template = "https://www.nli.org.il/en/books/NNL_ALEPH{}/NLI"
+punctuation_and_spaces = string.punctuation + string.whitespace
 
 
 def getquery(words):
@@ -92,20 +93,56 @@ def mk_rlist_serializable(rlist: deromanize.ReplacementList) -> RepList:
 
 
 def text_to_replists(text):
+    session = getsession()
     if not text:
-        return []
-    chunks = getsession().getchunks(text)
-    rlists = picaqueries.prerank(chunks, getsession())
-    return [mk_rlist_serializable(rl) for rl in rlists]
+        return [], None, None
+    text = text.replace("s̆", "š")
+    chunks, input_info = session.getchunks(text)
+    rlists, conversion_info = session.usecache(
+        chunks,
+        dictionary=session.termdict,
+        spelling_fallback=True,
+    )
+    return (
+        [mk_rlist_serializable(rl) for rl in rlists],
+        input_info,
+        conversion_info,
+    )
+
+
+def title_info_list_to_dict(td):
+    m, s, r = td
+    return {"main_title": m, "subtitle": s, "responsibility": r}
+
+
+def format_diagnostic_info(field_infos):
+    input_infos = []
+    conversion_infos = []
+    for ii, ci in field_infos:
+        if ii:
+            ii = ii._asdict()
+            ci = ci._asdict()
+            ii["standard"] = ii["standard"].value
+        input_infos.append(ii)
+        conversion_infos.append(ci)
+    return {
+        "input_info": title_info_list_to_dict(input_infos),
+        "conversion_info": title_info_list_to_dict(conversion_infos),
+    }
 
 
 def title_to_replist_subfields(title: str):
-    return solrmarc.RepTitle(
-        *(
-            [r["reps"] for r in text_to_replists(t)] if t else None
-            for t in split_title(title)
-        )
-    )
+    fields = []
+    infos = []
+    for t in split_title(title):
+        if t == ([], None):
+            fields.append(None)
+            infos.append(None)
+        else:
+            replists, input_info, conversion_info = text_to_replists(t)
+            fields.append([r["reps"] for r in replists])
+            infos.append((input_info, conversion_info))
+    return solrmarc.RepTitle(*fields), infos
 
 
 def has_heb(string: str):
@@ -119,18 +156,22 @@ def has_heb(string: str):
 
 def person_to_replists(person: str):
     if not has_heb(person):
-        return None
-    replists = text_to_replists(person)
+        return None, None
+    replists, input_info, conversion_info = text_to_replists(person)
     for i, rlist in enumerate(replists):
         replists[i] = rlist["reps"][:5]
-    return replists
+    return replists, input_info
 
 
 def ppn2record_and_rlist(ppn):
     record = getsession().records[ppn]
     title = picaqueries.gettranstitle(record)
-    serializable_rlists = text_to_replists(title.joined)
-    return dict(record=record.to_dict(), replists=serializable_rlists)
+    serializable_rlists, input_info, conversion_info = text_to_replists(title.joined)
+    return dict(
+        record=record.to_dict(),
+        replists=serializable_rlists,
+        input_info=input_info,
+    )
 
 
 def prepare_doc(solr_nli_doc):
@@ -190,15 +231,21 @@ def gettitle(record):
 class TitleReplists(NamedTuple):
     type: str
     replists: dict
+    field_infos: List[Tuple[arc.config.InputInfo, arc.config.ConversionInfo]]
 
 
 def record2replist(record: Dict[str, Union[str, List[str]]]):
     record_ = prep_record(record)
     title_type, title = gettitle(record_)
     title = re.sub(r"^\{([Hh]\w*-)\}\s*", r"\1", title)
-    title_replists = title_to_replist_subfields(title)
-    creator_replists = map(person_to_replists, record.get("creator", []))
-    return (TitleReplists(title_type, title_replists), list(creator_replists))
+    title_replists, infos = title_to_replist_subfields(title)
+    creator_replists = (
+        person_to_replists(c)[0] for c in record.get("creator", [])
+    )
+    return (
+        TitleReplists(title_type, title_replists, infos),
+        list(creator_replists),
+    )
 
 
 def json_records2replists(json_records: str):
@@ -225,12 +272,7 @@ def words_of_title_replists(title: solrmarc.RepTitle):
 
 
 def error(msg, record, **kwargs):
-    return {
-        "type": "error",
-        "message": msg,
-        "record": record,
-        **kwargs
-    }
+    return {"type": "error", "message": msg, "record": record, **kwargs}
 
 
 def join_title(main, sub, resp):
@@ -245,10 +287,12 @@ def join_title(main, sub, resp):
 async def record_with_results(record, replists_or_error):
     if isinstance(replists_or_error, Exception):
         return error(replists_or_error.__class__.__name__, record)
-    (title_type, title_reps), creator_replists = replists_or_error
+    (title_type, title_reps, field_infos), creator_replists = replists_or_error
     words = words_of_title_replists(title_reps)
     try:
-        generated_title = join_title(*(" ".join(w[0] for w in r) if r else None for r in title_reps))
+        generated_title = join_title(
+            *(" ".join(w[0] for w in r) if r else None for r in title_reps)
+        )
     except TypeError:
         return error("NoMainTitle", record)
     results = []
@@ -273,28 +317,33 @@ async def record_with_results(record, replists_or_error):
     if not ranked_results:
         for result in results:
             result["title"] = [t.joined for t in result["title"]]
+
         return dict(
             type="unverified",
             record=record,
             converted=generated_title,
             top_query_result=results[0]["title"] if results else None,
-            creator_replists=creator_replists,
+            diagnostic_info=format_diagnostic_info(field_infos),
+            # creator_replists=creator_replists,
         )
 
     top = ranked_results[0]
     title = top["title"]
-    heb_title = title.replace("<<", "{", 1).replace(">>", "}", 1)
+    heb_title = (
+        title.replace("<<", "{", 1).replace(">>", "}", 1).strip(" ;.:,")
+    )
     return dict(
         type="verified",
         record=record,
         converted=generated_title,
-        creator_replists=creator_replists,
+        # creator_replists=creator_replists,
         matched_title={
             "text": heb_title,
             "link": nli_template.format(top["doc"]["identifier"]),
             "diff": top["diff"],
-            "criteria": top["criteria"],
-        }
+            # "criteria": top["criteria"],
+        },
+        diagnostic_info=format_diagnostic_info(field_infos),
     )
 
 
@@ -343,10 +392,18 @@ class NLIQueryHandler(tornado.web.RequestHandler):
 
 class TextAndQueryHandler(tornado.web.RequestHandler):
     async def get(self, text):
-        text = await delegate(text_to_replists, text)
+        text, input_info = await delegate(text_to_replists, text)
         words = words_of_replists(text)
         results = await query_nli(words)
-        self.write(jsonencode({"conversion": text, "matches": results}))
+        self.write(
+            jsonencode(
+                {
+                    "conversion": text,
+                    "matches": results,
+                    "input_info": input_info._asdict(),
+                }
+            )
+        )
 
 
 class NextHandler(tornado.web.RequestHandler):

@@ -5,11 +5,13 @@ use over JSON API. At launch, the API will deal exclusively
 transliteration in library records.
 
 This is a simple GET request where the last element in the URL is a
-JSON array of records to be converted. Retroconversion is a
-time-consuming process, and this array should not be too long, so as
-to avoid timeouts. Probably less than one hundred would be ideal. The
-user is encouraged to multiple requests concurrently if a large amount
-of records needs to be processed.
+JSON array of records to be converted. [An actual URL will be given
+here when there is one.] Retroconversion is a time-consuming process,
+and this array should not be too long, so as to avoid
+timeouts. Probably less than one hundred records per-request would be
+ideal. The user is encouraged to send multiple requests concurrently
+if a large amount of records needs to be processed. (Of course, if you
+are using an asynchronous client, please don't accidentally DoS us.)
 
 Each client request shall contain an array of records for which the
 titles will be converted.
@@ -49,17 +51,17 @@ number in the case of `date`) or an array of scalars.
 Title values (i.e. `title` and `isPartOf`) should have the following
 format:
 
-> {_non-filing_} _main title_ *:* _subtitle_ */* responsibility statement
+> {_non-filing_} _main title_ **:** _subtitle_ **/** responsibility statement
 
-*Non-filing* words or characters should be surrounded by curly braces,
+**Non-filing** words or characters should be surrounded by curly braces,
 `{}`.
 
-*Main title* comes next. A main title is required.
+**Main title** comes next. A main title is required.
 
-*Subtitle* optionally comes next, and is preceded by a colon, `:`. The
+**Subtitle** optionally comes next, and is preceded by a colon, `:`. The
 colon should have spaces on either side.
 
-*Responsibility statement* optionally comes last, and is preceded by a
+**Responsibility statement** optionally comes last, and is preceded by a
 slash, `/`. The slash should have spaces on either side.
 
 A title value may be a single string or an array of titles, but only
@@ -216,9 +218,9 @@ title is very similar to what was converted. However, if the main
 title is almost identical and other metadata fields are matched, we
 are more relaxed about the subtitle and the responsibility statement.
 
-*When a match is found, it is always recommended to use the form of
+**When a match is found, it is always recommended to use the form of
 the title found in the matched data for automated entry into the
-catalog.* This title may have more or less information than the title
+catalog.** This title may have more or less information than the title
 given as input, but we feel it is more valuable to have the correct
 spellings of personal names (a weak point for retroconversion, at
 present) and words with non-standard spellings. Generally the Hebrew
@@ -269,4 +271,96 @@ section.
 }
 ```
 
-Many times, a title
+Many times, a title cannot be reliably verified with existing Hebrew
+metadata, either because the data does not exist in our database, or
+because of discrepancies in the title and insufficient metadata with
+which to verify, as in the above case.
+
+Here, "Ya'akov Shteinberg" is not correct transcription according to
+any of the standards we support, and appears to be a more informal
+type of Romanization. This is quite common in personal names in
+metadata. Because of this, the retroconversion process could not
+successfully reconstruct "שטיינברג". Additionally, this record lacks a
+`date` field, which is one of the fields used to establish matches
+when there discrepancies in the title.
+
+`unverified` results contain a `top_query_result` field with whatever
+our full-text search of the Hebrew metadata returned. This is more for
+Humans trying to see what happened than for any automated use.
+
+When there is no verified match, we may turn to the `diagnostic_info`
+to decide what to do with the converted data.
+
+### Diagnostic Info
+The value of `diagnostic_info` is an object containing fields for
+`input_info` and `conversion info`.
+
+
+#### Input Info
+The `input_info` contains data about the title fields given as
+input. The `input_info` value is an object which contains fields for
+each part of a title: `main_title`, `subtitle` and
+`responsibility`. For each of these, the value may be an object or
+`null`, if the specific title does not have this field. If it is an
+object, the object contains the fields `standard` and
+`foreign_tokens`.
+
+There are four possible values for `standard`:
+
+1. `ALA/LOC`. This is the transcription standard created by the
+   American Library Association and the Library of Congress. The DIN
+   standard for Romanized Hebrew in use today (since 2011) is nearly
+   identical to this standard.
+2. `DIN1982`. This is the DIN standard for Romanized Hebrew which was
+   in effect from 1982 to 2011.
+3. `PI`. This is the Prussian Instructions standard for Romanization,
+   which was in effect for many years in collections around various
+   German-speaking countries.
+4. `unknown`. This means the transcription standard could not be
+   determined. In such cases, the DIN1982 conversion system is used as
+   a fallback because it is the most robust for dealing with various
+   novelties and errors in transcription.
+   
+`foreign_tokens` may be either `true` or `false`. This means the input
+contains tokens which should on occur in Hebrew transcription but are
+common in other languages. This is most often because the input is not
+Hebrew transcription at all. However, it is not uncommon for titles
+with transcription errors to contain some of these foreign tokens.
+**Such cases have a higher rate of failure for retroconversion, and
+are not recommended for automatic catalog entry.** That is to say, you
+want `foreign_tokens` to be `false`.
+
+#### Conversion Info
+The `conversion_info` contains information about the converted
+output. The value of `conversion_info` also contains fields for each
+sub-field in the title, each of which may be `null` or contain an
+object. The object has three fields: `fully_converted`, `all_cached`
+and `all_recognized`, each of which may be true or false.
+
+- `fully_converted` means that all words in this portion of a title
+  could be converted to Hebrew script. If it is `false`, it means there
+  were transcription tokens in some of the words which were not
+  recognized and retroconversion could not be fully carried out. No
+  fields which have not been fully converted should be automatically
+  entered into catalogs.
+- `all_cached` means that all conversions for individual words could
+  be verified as having been correctly identified in the past. Titles
+  for which this is `true` are very likely to be correctly converted
+  and may be entered into the catalog with the disclaimer that
+  homophones may cause errors, as well as personal names without a
+  standardized orthography. If you are not comfortable with this risk,
+  it is at least recommended to use them for searchable fields which
+  are not displayed to the end-user. This will improve
+  discoverability. Our _recommendation_ is to automatically enter main
+  titles and subtitles for display in the catalog if this is `true`,
+  recognizing that there will be occasional errors, but to use the
+  responsibility statement for search-only fields.
+- `all_recognized` means that all conversions for individual words
+  were recognized as valid Hebrew, either from retroconversion
+  caching, the use of a large Hebrew word-list or the use of a Hebrew
+  spell checker (Hspell). Such fields are very likely to be correct,
+  but have a higher rate of error than fields where all conversions
+  could be verified with the cache. Our _recommendation_ is to use
+  conversions for which this is `true` as searchable fields. We may
+  recommend them for display in the future, after a more complete
+  analysis of the rate of error they contain.

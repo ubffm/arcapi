@@ -85,8 +85,9 @@ nothing with this field.
 ## Additional input fields
 
 Any other fields can be added to the record and will be ignored by the
-API. This may be useful for the output back to the catalog. Our
-internal Pica+ mappings generate records with the following format:
+API. This may be useful for transfering the output back to the
+catalog. Our internal Pica+ mappings generate records with the
+following format:
 
 ```json
 {
@@ -288,7 +289,7 @@ There are five possible values for `standard`:
    by American Library Association and the Library of Congress. Our
    retroconversion works with both.
 2. `Old DIN 31631`. This is conversion system for DIN standards for
-   Romanized Hebrew which was in effect from the early eighties until
+   Romanized Hebrew which were in effect from the early eighties until
    2011.
 3. `PI`. This is the Prussian Instructions standard for Romanization,
    which was in effect for many years in collections around various

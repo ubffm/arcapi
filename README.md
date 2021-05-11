@@ -196,8 +196,7 @@ given as input, but we feel it is more valuable to have the correct
 spellings of personal names (a weak point for retroconversion, at
 present) and words with non-standard spellings. Generally the Hebrew
 title will be added _in addition_ to the existing transliterated
-title, so none of the original data will be lost, so none of the
-original data will be lost.
+title, so none of the original data will be lost.
 
 At Frankfurt, we have found that titles matched in this way are
 correct more than 99% of the time. In our formal audit of more than
@@ -308,8 +307,9 @@ languages. This is most often because the input is not Hebrew
 transcription at all. However, it is not uncommon for titles with
 transcription errors to contain some of these foreign tokens.  **Such
 cases have a higher rate of failure for retroconversion, and are not
-recommended for automatic catalog entry.** That is to say, you want
-`foreign_tokens` to be `false`.
+recommended for automatic catalog entry unless they have been verified
+with existing Hebrew data.** That is to say, you want `foreign_tokens`
+to be `false`.
 
 `transliteration_tokens` may be `true` or `false`. This indicates that
 the title has non-ASCII charaters which appear in

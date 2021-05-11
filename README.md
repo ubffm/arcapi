@@ -51,7 +51,7 @@ number in the case of `date`) or an array of scalars.
 Title values (i.e. `title` and `isPartOf`) should have the following
 format:
 
-> {_non-filing_} _main title_ **:** _subtitle_ **/** responsibility statement
+> `{`_non-filing_`}` _main title_ `:` _subtitle_ `/` _responsibility statement_
 
 **Non-filing** words or characters should be surrounded by curly braces,
 `{}`.
@@ -115,49 +115,10 @@ only possible change is that any top-level scalar values will be
 converted to arrays. It is recommended to use arrays for everything
 for the sake of uniformity.
 
-`type` may have three different values: `verified`, `unverified` or
-`error`.
+`type` may have three different values: [`verified`](#verified),
+[`unverified`](#unverified) or [`error`](#error).
 
-## Error results
-An `error` type will contain a very short `message` describing the
-nature of the error:
-
-```json
-{
-  "type": "error",
-  "message": "CombinatorialExplosion",
-  "record": {
-    "title": ["Ṣēdā lā-derek / verf. von Paul laskar u. S. N. Margulies, hrsg. vom ʿCentralbureau für jüd. Auswanderungsangelegenheitenʾ"],
-    "creator": ["Laskar, Paul", "Margulies, S. N."],
-    "_creatorFields": ["028A", "028C"],
-    "date": [1905],
-    "publisher": ["Centralbureau, Berlin"],
-    "_publisherFields": ["033A"],
-    "identifier": ["78824745X"]
-  }
-}
-```
-
-In this case, there was combinatorial explosion. The first step of
-retroconversion is generating all possible Hebrew forms of a given
-input, which is a Cartesian product of all possible conversion forms
-for each transcription token. For long words this can become a huge
-number. Rather than crash the server, we stop when more than 10,000
-forms are generated for a word. This is almost certainly the case for
-_Auswanderungsangelegenheitenʾ_ in the above example. In practice we
-have never seen this happen with a Hebrew word, only long words
-from other languages.
-
-We may note here that the API will attempt to convert anything it
-receives as input. There are many works which are cataloged as Hebrew
-but may have titles in other languages, or titles in multiple
-languages, as the above example. Our system does use heuristics to
-determine weather the input appears to be Hebrew transcription, but
-these heuristics are not 100% accurate and sometimes a conversion can
-still be verified even if our system thought it didn't look like
-Hebrew transcription.
-
-## Verified results
+## <a name="verified"></a> Verified results
 
 In addition to the `type` and `record` fields, records of the type
 `verified` and `unverified` will contain a `converted` field and a
@@ -168,33 +129,43 @@ a `matched_title` field.
 ```json
 {
   "type": "verified",
-  "record": {
-    "title": ["{ha-} Zemer ha-ʿivri : poʾeṭiḳah, musiḳah, hisṭoriyah, tarbut / ʿorekhet ha-ḳovets Tamar Ṿolf-Monzon"],
+  "record": {"title": ["{ha-} Zemer ha-ʿivri : poʾeṭiḳah, musiḳah, hisṭoriyah, tarbut / ʿorekhet ha-ḳovets Tamar Ṿolf-Monzon"],
     "isPartOf": ["Biḳoret u-parshanut"],
-    "_seriesFields": ["036E/00"],
     "creator": ["Ṿolf-Monzon, Tamar"],
-    "_creatorFields": ["028C"],
     "date": [2012],
     "publisher": ["Universiṭat Bar-Ilan, Ramat-Gan"],
-    "_publisherFields": ["033A"],
     "identifier": ["728971356"]
   },
-  "converted": "{ה}זמר העברי : פואטיקה, מוסיקה, היסטוריה, תרבות / עורכת הקובץ תמר וולף - מונזון",
+  "converted": "{ה}זמר העברי : פואטיקה, מוסיקה, היסטוריה, תרבות / עורכת הקובץ תמר וולף-מונזון",
   "matched_title": {
     "text": "{ה}זמר העברי : פואטיקה, מוסיקה, היסטוריה, תרבות / עורכת הקובץ: תמר וולף-מונזון",
     "link": "https://www.nli.org.il/en/books/NNL_ALEPH003454760/NLI",
     "diff": 0.0
   },
   "diagnostic_info": {
-    "input_info": {
-      "main_title": {"standard": "ALA/LOC", "foreign_tokens": false},
-      "subtitle": {"standard": "ALA/LOC", "foreign_tokens": false},
-      "responsibility": {"standard": "ALA/LOC", "foreign_tokens": false}
+    "main_title": {
+      "standard": "New DIN 31631",
+      "foreign_tokens": false,
+      "transliteration_tokens": true,
+      "fully_converted": true,
+      "all_cached": true,
+      "all_recognized": true
     },
-    "conversion_info": {
-      "main_title": {"fully_converted": true, "all_cached": true, "all_recognized": true},
-      "subtitle": {"fully_converted": true, "all_cached": true, "all_recognized": true},
-      "responsibility": {"fully_converted": true, "all_cached": false, "all_recognized": false}
+    "subtitle": {
+      "standard": "New DIN 31631",
+      "foreign_tokens": false,
+      "transliteration_tokens": true,
+      "fully_converted": true,
+      "all_cached": true,
+      "all_recognized": true
+    },
+    "responsibility": {
+      "standard": "New DIN 31631",
+      "foreign_tokens": false,
+      "transliteration_tokens": true,
+      "fully_converted": true,
+      "all_cached": false,
+      "all_recognized": false
     }
   }
 }
@@ -235,11 +206,11 @@ been found outside of the formal audit. Still, the error rate is so
 low that we titles verified in this way back into the catalog without
 manually checking them.
 
-The `diagnostic_info` is less important for verified conversions than
-for unverified conversions, so it will be covered in the following
-section.
+The [`diagnostic_info`](#diagnostic_info) is less important for
+verified conversions than for unverified conversions, so it will be
+covered in the following section.
 
-## Unverified results
+## <a name=unverified></a> Unverified results
 
 ```json
 {
@@ -247,25 +218,33 @@ section.
   "record": {
     "title": ["Mivḥar. Liriḳa u-reshimot / Ya'akov Shteinberg"],
     "isPartOf": ["Sifriyat Devir le-ʿam"],
-    "_seriesFields": ["036E/00"],
     "creator": ["Shṭeinberg, Yaʿaḳov"],
-    "_creatorFields": ["028A"],
     "publisher": ["Dvir, Tel-Aviv"],
     "_publisherFields": ["033A"],
     "identifier": ["419745025"]
   },
   "converted": "מבחר. ליריקה ורשימות / יעקב שתאינברג",
-  "top_query_result": ["מבחר ליריקה ורשימות / יעקב שטיינברג."],
+  "top_query_result": {
+    "text": ["מבחר ליריקה ורשימות / יעקב שטיינברג."],
+    "link": "https://www.nli.org.il/en/books/NNL_ALEPH001326301/NLI"
+  },
   "diagnostic_info": {
-    "input_info": {
-      "main_title": {"standard": "ALA/LOC", "foreign_tokens": false},
-      "subtitle": null,
-      "responsibility": {"standard": "ALA/LOC", "foreign_tokens": false}
+    "main_title": {
+      "standard": "New DIN 31631",
+      "foreign_tokens": false,
+      "transliteration_tokens": true,
+      "fully_converted": true,
+      "all_cached": true,
+      "all_recognized": true
     },
-    "conversion_info": {
-      "main_title": {"fully_converted": true, "all_cached": true, "all_recognized": true},
-      "subtitle": null,
-      "responsibility": {"fully_converted": true, "all_cached": false, "all_recognized": false}
+    "subtitle": null,
+    "responsibility": {
+      "standard": "New DIN 31631",
+      "foreign_tokens": false,
+      "transliteration_tokens": false,
+      "fully_converted": true,
+      "all_cached": false,
+      "all_recognized": false
     }
   }
 }
@@ -291,76 +270,124 @@ Humans trying to see what happened than for any automated use.
 When there is no verified match, we may turn to the `diagnostic_info`
 to decide what to do with the converted data.
 
-### Diagnostic Info
-The value of `diagnostic_info` is an object containing fields for
-`input_info` and `conversion info`.
+### <a name="diagnostic_info"></a> Diagnostic Info
+The `diagnostic_info` value contains data about the title fields given
+as input, as well as some data about the output, broken down for each
+part of the title. In the future, when fields of other types are
+converted, they will have their own entries in the
+`diagnostic_info`. The fields currently presented are `main_title`,
+`subtitle` and `responsibility`. For each of these, the value may be
+an object or `null`, if the specific title does not have this
+field. If it is an object, the object contains the fields `standard`
+and `foreign_tokens`, `transliteration_tokens`, `fully_converted`,
+`all_cached`, and `all_recognized`.
 
+There are five possible values for `standard`:
 
-#### Input Info
-The `input_info` contains data about the title fields given as
-input. The `input_info` value is an object which contains fields for
-each part of a title: `main_title`, `subtitle` and
-`responsibility`. For each of these, the value may be an object or
-`null`, if the specific title does not have this field. If it is an
-object, the object contains the fields `standard` and
-`foreign_tokens`.
-
-There are four possible values for `standard`:
-
-1. `ALA/LOC`. This is the transcription standard created by the
-   American Library Association and the Library of Congress. The DIN
-   standard for Romanized Hebrew in use today (since 2011) is nearly
-   identical to this standard.
-2. `DIN1982`. This is the DIN standard for Romanized Hebrew which was
-   in effect from 1982 to 2011.
+1. `New DIN 31631`. This is the Romanization standard adopted by DIN
+   in 2011 (and its updates), which is nearly identical the one used
+   by American Library Association and the Library of Congress. Our
+   retroconversion works with both.
+2. `Old DIN 31631`. This is conversion system for DIN standards for
+   Romanized Hebrew which was in effect from the early eighties until
+   2011.
 3. `PI`. This is the Prussian Instructions standard for Romanization,
    which was in effect for many years in collections around various
    German-speaking countries.
 4. `unknown`. This means the transcription standard could not be
-   determined. In such cases, the DIN1982 conversion system is used as
-   a fallback because it is the most robust for dealing with various
-   novelties and errors in transcription.
+   determined. In such cases, the "Old DIN" conversion system is used
+   as a fallback because it is the most robust for dealing with
+   various novelties and errors in transcription.
+5. `not_latin`. This indicates that no Latin characters were detected
+   in the title, and it is therefore not Romanization.
    
 `foreign_tokens` may be either `true` or `false`. This means the input
-contains tokens which should on occur in Hebrew transcription but are
-common in other languages. This is most often because the input is not
-Hebrew transcription at all. However, it is not uncommon for titles
-with transcription errors to contain some of these foreign tokens.
-**Such cases have a higher rate of failure for retroconversion, and
-are not recommended for automatic catalog entry.** That is to say, you
-want `foreign_tokens` to be `false`.
+contains tokens (i.e. characters or groups of characters) which should
+not occur in Hebrew transcription but are common in other
+languages. This is most often because the input is not Hebrew
+transcription at all. However, it is not uncommon for titles with
+transcription errors to contain some of these foreign tokens.  **Such
+cases have a higher rate of failure for retroconversion, and are not
+recommended for automatic catalog entry.** That is to say, you want
+`foreign_tokens` to be `false`.
 
-#### Conversion Info
-The `conversion_info` contains information about the converted
-output. The value of `conversion_info` also contains fields for each
-sub-field in the title, each of which may be `null` or contain an
-object. The object has three fields: `fully_converted`, `all_cached`
-and `all_recognized`, each of which may be true or false.
+`transliteration_tokens` may be `true` or `false`. This indicates that
+the title has non-ASCII charaters which appear in
+transliteration. This can be useful as a guide for which titles that
+contain foreign tokens may nonetheless be Hebrew
+transcription. However, it may be true for languages like French which
+use the circumflex /^/ over vowels, or languages which use /š/, such
+as most Latin-script Slavic languages, as well as Romanization systems
+for other languages which contain special charaters similar to those
+used for Hebrew. This field is included, along with `foreign_tokens`
+to narrow down which titles one may want to look at individually, but
+should not be taken as reliable indicators of the input language
+without human verification.
 
-- `fully_converted` means that all words in this portion of a title
-  could be converted to Hebrew script. If it is `false`, it means there
-  were transcription tokens in some of the words which were not
-  recognized and retroconversion could not be fully carried out. No
-  fields which have not been fully converted should be automatically
-  entered into catalogs.
-- `all_cached` means that all conversions for individual words could
-  be verified as having been correctly identified in the past. Titles
-  for which this is `true` are very likely to be correctly converted
-  and may be entered into the catalog with the disclaimer that
-  homophones may cause errors, as well as personal names without a
-  standardized orthography. If you are not comfortable with this risk,
-  it is at least recommended to use them for searchable fields which
-  are not displayed to the end-user. This will improve
-  discoverability. Our _recommendation_ is to automatically enter main
-  titles and subtitles for display in the catalog if this is `true`,
-  recognizing that there will be occasional errors, but to use the
-  responsibility statement for search-only fields.
-- `all_recognized` means that all conversions for individual words
-  were recognized as valid Hebrew, either from retroconversion
-  caching, the use of a large Hebrew word-list or the use of a Hebrew
-  spell checker (Hspell). Such fields are very likely to be correct,
-  but have a higher rate of error than fields where all conversions
-  could be verified with the cache. Our _recommendation_ is to use
-  conversions for which this is `true` as searchable fields. We may
-  recommend them for display in the future, after a more complete
-  analysis of the rate of error they contain.
+`fully_converted` means that all words in this portion of a title
+could be converted to Hebrew script. If it is `false`, it means
+there were transcription tokens in some of the words which were not
+recognized and retroconversion could not be fully carried out. **No
+fields which have not been fully converted should be automatically
+entered into catalogs unless they have been verified with existing
+Hebrew data.**
+
+`all_cached` means that all conversions for individual words could
+be verified as having been correctly identified in the past. Titles
+for which this is `true` are very likely to be correctly converted
+and may be entered into the catalog with the disclaimer that
+homophones may cause errors, as well as personal names without a
+standardized orthography. If you are not comfortable with this risk,
+it is at least recommended to use them for searchable fields which
+are not displayed to the end-user. This will improve
+discoverability. _Our recommendation_ is to automatically enter main
+titles and subtitles for display in the catalog if this is `true`,
+recognizing that there will be occasional errors, but to use the
+responsibility statement for search-only fields.
+
+`all_recognized` means that all conversions for individual words
+were recognized as valid Hebrew, either from retroconversion
+caching, the use of a large Hebrew word-list or the use of a Hebrew
+spell checker (Hspell). Such fields are very likely to be correct,
+but have a higher rate of error than fields where all conversions
+could be verified with the cache. _Our recommendation_ is to use
+conversions for which this is `true` as searchable fields. We may
+recommend them for display in the future, after a more complete
+analysis of the rate of error they contain.
+
+## <a name="error"></a> Error results
+An `error` type will contain a very short `message` describing the
+nature of the error:
+
+```json
+{
+  "type": "error",
+  "message": "CombinatorialExplosion",
+  "record": {
+    "title": ["Ṣēdā lā-derek / verf. von Paul laskar u. S. N. Margulies, hrsg. vom ʿCentralbureau für jüd. Auswanderungsangelegenheitenʾ"],
+    "creator": ["Laskar, Paul", "Margulies, S. N."],
+    "date": [1905],
+    "publisher": ["Centralbureau, Berlin"],
+    "identifier": ["78824745X"]
+  }
+}
+```
+
+In this case, there was combinatorial explosion. The first step of
+retroconversion is generating all possible Hebrew forms of a given
+input, which is a Cartesian product of all possible conversion forms
+for each transcription token. For long words this can become a huge
+number. Rather than crash the server, we stop when more than 10,000
+forms are generated for a word. This is almost certainly the case for
+_Auswanderungsangelegenheitenʾ_ in the above example. In practice we
+have never seen this happen with a Hebrew word, only long words
+from other languages.
+
+We may note here that the API will attempt to convert anything it
+receives as input. There are many works which are cataloged as Hebrew
+but may have titles in other languages, or titles in multiple
+languages, as the above example. Our system does use heuristics to
+determine weather the input appears to be Hebrew transcription, but
+these heuristics are not 100% accurate and sometimes a conversion can
+still be verified even if our system thought it didn't look like
+Hebrew transcription.

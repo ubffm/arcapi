@@ -110,9 +110,11 @@ def text_to_replists(text):
     )
 
 
-def title_info_list_to_dict(td):
-    m, s, r = td
-    return {"main_title": m, "subtitle": s, "responsibility": r}
+def _merge_d(d1, d2):
+    if d1 is None:
+        return None
+    else:
+        return {**d1, **d2}
 
 
 def format_diagnostic_info(field_infos):
@@ -125,9 +127,12 @@ def format_diagnostic_info(field_infos):
             ii["standard"] = ii["standard"].value
         input_infos.append(ii)
         conversion_infos.append(ci)
+    m1, s1, r1 = input_infos
+    m2, s2, r2 = conversion_infos
     return {
-        "input_info": title_info_list_to_dict(input_infos),
-        "conversion_info": title_info_list_to_dict(conversion_infos),
+        "main_title": _merge_d(m1, m2),
+        "subtitle": _merge_d(s1, s2),
+        "responsibility": _merge_d(r1, r2),
     }
 
 
@@ -201,11 +206,11 @@ class NoTitleGiven(Exception):
 def prep_record(record: Dict[str, Union[str, List[str]]]):
     # mutation
     for k, v in record.items():
-        if isinstance(v, str):
+        if isinstance(v, (str, int)):
             record[k] = [v]
         elif not isinstance(v, list):
             raise MalformedRecord(record)
-    return cast(Dict[str, List[str]], record)
+    return cast(Dict[str, Union[List[str], List[int]]], record)
 
 
 title_t = "title"
@@ -232,18 +237,27 @@ class TitleReplists(NamedTuple):
     type: str
     replists: dict
     field_infos: List[Tuple[arc.config.InputInfo, arc.config.ConversionInfo]]
+    non_filing_article: bool
+
+
+NON_FILING = re.compile(r"^\{([Hh]\w*-)(\s*)\}(\s*)")
 
 
 def record2replist(record: Dict[str, Union[str, List[str]]]):
+    non_filing_article = False
+
     record_ = prep_record(record)
     title_type, title = gettitle(record_)
-    title = re.sub(r"^\{([Hh]\w*-)\}\s*", r"\1", title)
+    non_filing_match = NON_FILING.match(title)
+    if non_filing_match:
+        title = non_filing_match.group(1) + title[non_filing_match.end():]
+        non_filing_article = True
     title_replists, infos = title_to_replist_subfields(title)
     creator_replists = (
         person_to_replists(c)[0] for c in record.get("creator", [])
     )
     return (
-        TitleReplists(title_type, title_replists, infos),
+        TitleReplists(title_type, title_replists, infos, non_filing_article),
         list(creator_replists),
     )
 
@@ -287,11 +301,11 @@ def join_title(main, sub, resp):
 async def record_with_results(record, replists_or_error):
     if isinstance(replists_or_error, Exception):
         return error(replists_or_error.__class__.__name__, record)
-    (title_type, title_reps, field_infos), creator_replists = replists_or_error
-    words = words_of_title_replists(title_reps)
+    title_reps, creator_replists = replists_or_error
+    words = words_of_title_replists(title_reps.replists)
     try:
         generated_title = join_title(
-            *(" ".join(w[0] for w in r) if r else None for r in title_reps)
+            *(" ".join(w[0] for w in r) if r else None for r in title_reps.replists)
         )
     except TypeError:
         return error("NoMainTitle", record)
@@ -310,20 +324,29 @@ async def record_with_results(record, replists_or_error):
         None,  # publisher
         None,  # publisher_reps
         record.get("date", []),
-        title_reps,
+        title_reps.replists,
         results,
     )
-
+    if title_reps.non_filing_article:
+        generated_title = "{ה}" + generated_title[1:]
+    generated_title = generated_title.replace(" - ", "-")
     if not ranked_results:
-        for result in results:
-            result["title"] = [t.joined for t in result["title"]]
+
+        if results:
+            for result in results:
+                result["title"] = [t.joined for t in result["title"]]
+            top = results[0]
+            title = top["title"]
+            link = nli_template.format(top["identifier"])
+        else:
+            title, link = None, None
 
         return dict(
             type="unverified",
             record=record,
             converted=generated_title,
-            top_query_result=results[0]["title"] if results else None,
-            diagnostic_info=format_diagnostic_info(field_infos),
+            top_query_result={"text": title, "link": link},
+            diagnostic_info=format_diagnostic_info(title_reps.field_infos),
             # creator_replists=creator_replists,
         )
 
@@ -343,7 +366,7 @@ async def record_with_results(record, replists_or_error):
             "diff": top["diff"],
             # "criteria": top["criteria"],
         },
-        diagnostic_info=format_diagnostic_info(field_infos),
+        diagnostic_info=format_diagnostic_info(title_reps.field_infos),
     )
 
 

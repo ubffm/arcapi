@@ -9,9 +9,10 @@ authors = ["Aaron Christianson <ninjaaron@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.5"
-arc = ">=0.0"
-deromanize = ">=0.0.0"
-compose-struct = ">=0.0.0"
+arc = {git = "https://github.com/FID-Judaica/goethe-university-library-arc.git"}
+deromanize = {git = "https://github.com/FID-Judaica/goethe-university-library-arc.git"}
+compose-struct = {git = "https://github.com/ninjaaron/compose-struct.git"}
+HspellPy = ">=0.1.4"
 
 [tool.poetry.dev-dependencies]
 

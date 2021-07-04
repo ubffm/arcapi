@@ -12,7 +12,7 @@ python = "^3.5"
 arc = {git = "https://github.com/FID-Judaica/goethe-university-library-arc.git"}
 deromanize = {git = "https://github.com/FID-Judaica/goethe-university-library-arc.git"}
 compose-struct = {git = "https://github.com/ninjaaron/compose-struct.git"}
-HspellPy = ">=0.1.4"
+HspellPy = "^0.1.0"
 
 [tool.poetry.dev-dependencies]
 

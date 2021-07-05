@@ -171,7 +171,9 @@ def person_to_replists(person: str):
 def ppn2record_and_rlist(ppn):
     record = getsession().records[ppn]
     title = picaqueries.gettranstitle(record)
-    serializable_rlists, input_info, conversion_info = text_to_replists(title.joined)
+    serializable_rlists, input_info, conversion_info = text_to_replists(
+        title.joined
+    )
     return dict(
         record=record.to_dict(),
         replists=serializable_rlists,
@@ -250,7 +252,7 @@ def record2replist(record: Dict[str, Union[str, List[str]]]):
     title_type, title = gettitle(record_)
     non_filing_match = NON_FILING.match(title)
     if non_filing_match:
-        title = non_filing_match.group(1) + title[non_filing_match.end():]
+        title = non_filing_match.group(1) + title[non_filing_match.end() :]
         non_filing_article = True
     title_replists, infos = title_to_replist_subfields(title)
     creator_replists = (
@@ -305,7 +307,10 @@ async def record_with_results(record, replists_or_error):
     words = words_of_title_replists(title_reps.replists)
     try:
         generated_title = join_title(
-            *(" ".join(w[0] for w in r) if r else None for r in title_reps.replists)
+            *(
+                " ".join(w[0] for w in r) if r else None
+                for r in title_reps.replists
+            )
         )
     except TypeError:
         return error("NoMainTitle", record)

@@ -10,11 +10,11 @@ services:
   solr:
     image: ubuntu-solr:latest
     volumes:
-      - nlidb_data:/home/app/project-dir/solr-8.8.1/server/solr
+      - nlidb:/home/app/project-dir/solr-8.8.1/server/solr
     expose:
       - 8983
 
 volumes:
-  nlidb_data:
+  nlidb:
     external: true
     name: nlidb

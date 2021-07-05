@@ -1,0 +1,8 @@
+cache_db: ./resources/heb_cache.sqlite
+pica_db: /dev/null
+
+nli_checker:
+  solr_url: http://solr:8983/solr
+  terms:
+    - ./resources/wordlists/titleterms.json
+    - ./resources/wordlists/nameterms.json

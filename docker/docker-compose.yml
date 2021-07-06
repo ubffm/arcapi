@@ -13,8 +13,8 @@ services:
       - nlidb:/home/app/project-dir/solr-8.8.1/server/solr
     expose:
       - 8983
+    ports:
+      - "8983:8983"
 
 volumes:
   nlidb:
-    external: true
-    name: nlidb

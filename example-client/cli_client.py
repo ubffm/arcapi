@@ -4,6 +4,8 @@ import urllib.parse
 import requests
 import pprint
 
-URL = "http://localhost:8888/api/"
-resp = requests.get(URL + urllib.parse.quote(sys.argv[1]))
+session = requests.Session()
+domain, query = sys.argv[1:3]
+URL = f"{domain}/api/"
+resp = session.get(URL + urllib.parse.quote(query)) #, verify=False)
 pprint.pprint(resp.json())

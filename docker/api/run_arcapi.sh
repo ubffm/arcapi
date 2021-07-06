@@ -1,3 +1,2 @@
 #!/bin/sh
-. venv/bin/activate
-python -m arcapi
+venv/bin/python -m arcapi

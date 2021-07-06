@@ -264,9 +264,19 @@ def record2replist(record: Dict[str, Union[str, List[str]]]):
     )
 
 
+class InputNotArray(Exception):
+    pass
+
+
 def json_records2replists(json_records: str):
-    records = jsondecode(json_records)
+    try:
+        records = jsondecode(json_records)
+    except json.JSONDecodeError as e:
+        return [(json_records, e)]
     out = []
+    if not isinstance(records, list):
+        e = InputNotArray("api input should be an array of record objects")
+        return [(records, e)]
     for record in records:
         try:
             out.append((record, record2replist(record)))
@@ -302,7 +312,7 @@ def join_title(main, sub, resp):
 
 async def record_with_results(record, replists_or_error):
     if isinstance(replists_or_error, Exception):
-        return error(replists_or_error.__class__.__name__, record)
+        return error(repr(replists_or_error), record)
     title_reps, creator_replists = replists_or_error
     words = words_of_title_replists(title_reps.replists)
     try:

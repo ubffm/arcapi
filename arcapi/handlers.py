@@ -4,6 +4,7 @@ import functools
 import json
 import tornado.web
 import re
+import libaaron
 
 from arc import picaqueries, filters, solrtools
 from arc.decode import debracket
@@ -355,8 +356,7 @@ async def record_with_results(record, replists_or_error):
             link = nli_template.format(top["identifier"])
         else:
             title, link = None, None
-
-        return dict(
+        out = dict(
             type="unverified",
             record=record,
             converted=generated_title,
@@ -364,13 +364,16 @@ async def record_with_results(record, replists_or_error):
             diagnostic_info=format_diagnostic_info(title_reps.field_infos),
             # creator_replists=creator_replists,
         )
+        recommendation = get_recommendation(out)
+        out["recommendation"] = recommendation
 
+        return out
     top = ranked_results[0]
     title = top["title"]
     heb_title = (
         title.replace("<<", "{", 1).replace(">>", "}", 1).strip(" ;.:,")
     )
-    return dict(
+    out = dict(
         type="verified",
         record=record,
         converted=generated_title,
@@ -383,10 +386,61 @@ async def record_with_results(record, replists_or_error):
         },
         diagnostic_info=format_diagnostic_info(title_reps.field_infos),
     )
+    recommendation = get_recommendation(out)
+    out["recommendation"] = recommendation
+    return out
 
 
 def set_json(handler: tornado.web.RequestHandler):
     handler.set_header(name="Content-Type", value="application/json")
+
+
+def dd_or_empty(input):
+    if isinstance(input, dict):
+        return libaaron.DotDict(input)
+    return input
+
+
+def good_for_search(subfield_info):
+    return (
+        subfield_info is not None
+        and subfield_info.all_recognized
+        and subfield_info.transliteration_tokens
+        and not subfield_info.foreign_tokens
+        and subfield_info.standard != "unknown"
+    )
+
+
+def can_display(subfield_info):
+    return (
+        subfield_info is not None
+        and subfield_info.all_cached
+        and not subfield_info.foreign_tokens
+        and subfield_info.standard != "unknown"
+    )
+
+
+def get_recommendation(result):
+    if result["type"] == "verified":
+        return {"display": ["matched_title"], "search": []}
+
+    di = result["diagnostic_info"]
+    main_title, subtitle, responsibility = (
+        dd_or_empty(di[x]) for x in ("main_title", "subtitle", "responsibility")
+    )
+    for_search = []
+    if good_for_search(responsibility):
+        for_search.append("responsibility")
+    if can_display(main_title):
+        if can_display(subtitle):
+            return {"display": ["main_title", "subtitle"], "search": for_search}
+        elif subtitle is None:
+            return {"display": ["main_title"], "search": for_search}
+    if good_for_search(main_title):
+        for_search.append("main_title")
+        if good_for_search(subtitle):
+            for_search.append("subtitle")
+    return {"display": [], "search": for_search}
 
 
 class APIHandler(tornado.web.RequestHandler):

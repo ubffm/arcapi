@@ -3,4 +3,4 @@ mkdir -p ~/.config/deromanize/
 mv ./config.yml ~/.config/deromanize/
 python3 -m venv venv
 venv/bin/pip install -U pip
-venv/bin/pip install "git+https:///github.com/FID-Judaica/arcapi.git"
+venv/bin/pip install "git+https:///github.com/ubffm/arcapi.git"

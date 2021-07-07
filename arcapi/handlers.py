@@ -385,8 +385,13 @@ async def record_with_results(record, replists_or_error):
     )
 
 
+def set_json(handler: tornado.web.RequestHandler):
+    handler.set_header(name="Content-Type", value="application/json")
+
+
 class APIHandler(tornado.web.RequestHandler):
     async def get(self, json_records):
+        set_json(self)
         records_n_replists = await delegate(
             json_records2replists, json_records
         )

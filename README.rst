@@ -20,7 +20,8 @@ asynchronous client, please don’t accidentally DoS us.)
 Each client request shall contain an array of records for which the
 titles will be converted.
 
-    Note: at the moment, there is an SSL issue affecting some clients
+    Note:
+      At the moment, there is an SSL issue affecting some clients
       (``curl``, for example) which causes the client not to recognize
       the certificate. We are working to resolve this issue, but for now
       it is recommended to disable SSL validation if this problem affects

@@ -9,8 +9,8 @@ records.
 .. contents::
 
 This is a simple GET request where the last element in the URL is a JSON
-array of records to be converted. [An actual URL will be given here when
-there is one.] Retroconversion is a time-consuming process, and this
+array of records to be converted. e.g. ``https://api.jewishstudies.de/api/YOUR_ARRAY_HERE``
+Retroconversion is a time-consuming process, and this
 array should not be too long, so as to avoid timeouts. Probably less
 than one hundred records per-request would be ideal. The user is
 encouraged to send multiple requests concurrently if a large amount of

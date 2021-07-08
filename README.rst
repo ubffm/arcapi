@@ -1,6 +1,6 @@
-reVrit API Documentation
+Revrit API Documentation
 ========================
-*reVrit*, the Retroconversion system developed by the Goethe University
+*Revrit*, the Retroconversion system developed by the Goethe University
 Library for the reconstruction of Hebrew script from metadata stored in
 transcription, will soon be available for public use over JSON API. At
 launch, the API will deal exclusively transliteration in library

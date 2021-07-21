@@ -40,9 +40,8 @@ ENV APP_HOME=/home/app/project-dir
 COPY --from=build /home/app /home/app
 RUN chown -R app:app $HOME
 WORKDIR $APP_HOME
+# baz
 
 USER app
 
 CMD ["./run_arcapi.sh"]
-
-# bar

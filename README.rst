@@ -1,6 +1,6 @@
-reVrit API Documentation
+Revrit API Documentation
 ========================
-*reVrit*, the Retroconversion system developed by the Goethe University
+*Revrit*, the Retroconversion system developed by the Goethe University
 Library for the reconstruction of Hebrew script from metadata stored in
 transcription, will soon be available for public use over JSON API. At
 launch, the API will deal exclusively transliteration in library
@@ -9,8 +9,8 @@ records.
 .. contents::
 
 This is a simple GET request where the last element in the URL is a JSON
-array of records to be converted. [An actual URL will be given here when
-there is one.] Retroconversion is a time-consuming process, and this
+array of records to be converted. e.g. ``https://api.jewishstudies.de/api/YOUR_ARRAY_HERE``
+Retroconversion is a time-consuming process, and this
 array should not be too long, so as to avoid timeouts. Probably less
 than one hundred records per-request would be ideal. The user is
 encouraged to send multiple requests concurrently if a large amount of
@@ -19,6 +19,13 @@ asynchronous client, please don’t accidentally DoS us.)
 
 Each client request shall contain an array of records for which the
 titles will be converted.
+
+    Note:
+      At the moment, there is an SSL issue affecting some clients
+      (``curl``, for example) which causes the client not to recognize
+      the certificate. We are working to resolve this issue, but for now
+      it is recommended to disable SSL validation if this problem affects
+      your client, since the API is not intended to transport private data.
 
 API Input
 ---------

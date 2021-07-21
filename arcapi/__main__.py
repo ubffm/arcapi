@@ -8,11 +8,11 @@ from arcapi import handlers
 application = tornado.web.Application(
     [
         (r"/api/(.*)", handlers.APIHandler),
-        # (r"/", tornado.web.RedirectHandler, {"url": "/index.html"}),
+        (r"/", tornado.web.RedirectHandler, {"url": "/index.html"}),
         (
             r"/(.*)",
             tornado.web.StaticFileHandler,
-            {"path": str(config.project_dir / "arcapi" /"index.html")},
+            {"path": str(config.project_dir / "arcapi" / "static")},
         ),
     ]
 )

@@ -37,10 +37,10 @@ RUN groupadd -r app &&\
 ENV HOME=/home/app
 ENV APP_HOME=/home/app/project-dir
 
+# fump
 COPY --from=build /home/app /home/app
 RUN chown -R app:app $HOME
 WORKDIR $APP_HOME
-# baz
 
 USER app
 

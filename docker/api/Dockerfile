@@ -42,6 +42,5 @@ RUN chown -R app:app $HOME
 WORKDIR $APP_HOME
 
 USER app
-# foo
 
 CMD ["./run_arcapi.sh"]

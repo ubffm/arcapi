@@ -44,3 +44,5 @@ WORKDIR $APP_HOME
 USER app
 
 CMD ["./run_arcapi.sh"]
+
+# bar

@@ -10,7 +10,7 @@ application = tornado.web.Application(
         (r"/api/(.*)", handlers.APIHandler),
         # (r"/", tornado.web.RedirectHandler, {"url": "/index.html"}),
         (
-            r"/",
+            r"/(.*)",
             tornado.web.StaticFileHandler,
             {"path": str(config.project_dir / "arcapi" /"index.html")},
         ),

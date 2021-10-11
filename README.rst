@@ -389,7 +389,61 @@ the cache. **Our recommendation is to use conversions for which this is
 future, after a more complete analysis of the rate of error they
 contain.**
 
-.. _error:
+.. _recommendation:
+
+Recommendation
+++++++++++++++
+
+While the ``diagnostic_info`` is useful for more in-depth analysis of
+the properties of a title, the API result also has a
+``recommendation`` field. This value of this field is an object with a
+``display`` property and a ``search`` property. The value of each of
+these properties is an array of strings, telling which sections of a
+converted title are recommended for display in the catalog interface,
+and which parts, while not certain enough for display seem like good
+candidates for including in a non-display searchable field.
+
+Here is pseudo-code for the decision tree used to determine whether
+various parts of the title are suitable for display or search:
+
+.. code:: python
+
+   if type == verified:
+       add matched_title to catalog for display and search
+
+   else if type == unverified:
+
+        can_display(x) =
+            x is not null
+            and x.all_cached
+            and not x.foreign_tokens
+            and x.standard is not unknown
+
+       good_for_search(x) =
+           x is not null
+           and x.all_recognized
+           and x.transliteration_tokens
+           and not x.foreign_tokens
+           and x.standard is not unknown
+
+        # this avoids displaying the main title if the subtitle exists
+        # but is not fit for display.
+        if can_display(main_title):
+            if can_display(subtitle):
+                use main_title and subtitle for display
+            else if subtitle is null:
+                use main_title for display
+
+        if good_for_search(main_title):
+            use main_title for search
+            if good_for_search(subtitle):
+                use subtitle for search
+
+        if good_for_search(responsibility):
+            use responsibility statment in searchable data
+
+
+.. _error: 
 
 Error results
 ~~~~~~~~~~~~~

@@ -87,6 +87,10 @@ class RepList(TypedDict):
     reps: Reps
 
 
+class NotLatin(Exception):
+    pass
+
+
 def mk_rlist_serializable(rlist: deromanize.ReplacementList) -> RepList:
     reps = [str(rep) for rep in rlist[:20]]
     key = rlist.key if isinstance(rlist, deromanize.ReplacementList) else rlist
@@ -236,14 +240,22 @@ def gettitle(record):
             raise NoTitleGiven(record)
 
 
+InfoPairs = List[Tuple[arc.config.InputInfo, arc.config.ConversionInfo]]
+
+
 class TitleReplists(NamedTuple):
     type: str
     replists: dict
-    field_infos: List[Tuple[arc.config.InputInfo, arc.config.ConversionInfo]]
+    field_infos: InfoPairs
     non_filing_article: bool
 
 
 NON_FILING = re.compile(r"^\{([Hh]\w*-)(\s*)\}(\s*)")
+
+
+def islatin(infos: InfoPairs):
+    input_info, _ = infos[0]
+    return not (input_info.standard == arc.config.Standard.not_latin)
 
 
 def record2replist(record: Dict[str, Union[str, List[str]]]):
@@ -256,6 +268,8 @@ def record2replist(record: Dict[str, Union[str, List[str]]]):
         title = non_filing_match.group(1) + title[non_filing_match.end() :]
         non_filing_article = True
     title_replists, infos = title_to_replist_subfields(title)
+    if not islatin(infos):
+        raise NotLatin("the input is not latin script")
     creator_replists = (
         person_to_replists(c)[0] for c in record.get("creator", [])
     )
@@ -281,7 +295,7 @@ def json_records2replists(json_records: str):
     for record in records:
         try:
             out.append((record, record2replist(record)))
-        except (NoTitleGiven, CombinatorialExplosion) as e:
+        except (NoTitleGiven, CombinatorialExplosion, NotLatin) as e:
             out.append((record, e))
     return out
 

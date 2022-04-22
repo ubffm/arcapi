@@ -16,6 +16,11 @@ application = tornado.web.Application(
             tornado.web.StaticFileHandler,
             {"path": str(config.project_dir / "arcapi" / "static")},
         ),
+        (
+            r"/audit/(.*)",
+            tornado.web.StaticFileHandler,
+            {"path": str(config.project_dir / "arcapi" / "static" / "audit")},
+        ),
     ]
 )
 port = 8888

@@ -13,7 +13,7 @@ application = tornado.web.Application(
         (r"/api/(.*)", handlers.APIHandler),
         (r"/with-replacements/(.*)", handlers.RecordsAndRepsHandler),
         (r"/text/(.*)", handlers.TextHandler),
-        (r"/", tornado.web.StaticFileHandler, {"path": str(audit_path / "index.html")}),
+        (r"/", handlers.GUIHandler),
         (r"/(.*)",
             tornado.web.StaticFileHandler,
             {"path": str(audit_path)},

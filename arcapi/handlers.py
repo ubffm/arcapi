@@ -598,3 +598,11 @@ class SubmitHandler(tornado.web.RequestHandler):
         data = jsondecode(hairball)
         ppns[data["ppn"]] = hairball
         self.write(next(ppns))
+
+
+class GUIHandler(tornado.web.RequestHandler):
+    async def get(self, hairball):
+        with open(
+                config.project_dir / "arcapi" / "static" / "audit" / "index.html") as fh:
+            page = fh.read()
+        self.write(page)

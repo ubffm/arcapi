@@ -10,7 +10,7 @@ services:
   solr:
     image: ubuntu-solr:latest
     volumes:
-      - nlidb:/home/app/project-dir/solr-8.9.0/server/solr
+      - nlidb:/home/app/project-dir/solr-8.10.1/server/solr
     expose:
       - 8983
     ports:

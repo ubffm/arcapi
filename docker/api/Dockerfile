@@ -1,5 +1,4 @@
 FROM ubuntu:20.04 as build
-#
 # install deps
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
@@ -38,7 +37,6 @@ RUN groupadd -r app &&\
 ENV HOME=/home/app
 ENV APP_HOME=/home/app/project-dir
 
-# fump
 COPY --from=build /home/app /home/app
 RUN chown -R app:app $HOME
 WORKDIR $APP_HOME

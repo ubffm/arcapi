@@ -44,6 +44,7 @@ application = tornado.web.Application(
         # ),
     ],
     static_path=audit_path,
+    autoreload=True,
 )
 port = 8888
 print("now servering on", port)

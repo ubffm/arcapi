@@ -601,10 +601,11 @@ class SubmitHandler(tornado.web.RequestHandler):
         self.write(next(ppns))
 
 
+with open(
+        config.project_dir / "arcapi" / "static" / "audit" / "index.html"
+) as fh:
+    gui = fh.read()
+
 class GUIHandler(tornado.web.RequestHandler):
     async def get(self):
-        with open(
-                config.project_dir / "arcapi" / "static" / "audit" / "index.html"
-        ) as fh:
-            page = fh.read()
-        self.write(page)
+        self.write(gui)

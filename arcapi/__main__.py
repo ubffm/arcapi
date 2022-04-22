@@ -13,7 +13,7 @@ application = tornado.web.Application(
         (r"/api/(.*)", handlers.APIHandler),
         (r"/with-replacements/(.*)", handlers.RecordsAndRepsHandler),
         (r"/text/(.*)", handlers.TextHandler),
-        (r"/audit", tornado.web.StaticFileHandler, {"path": str(audit_path / "index.html")}),
+        (r"/audit", tornado.web.StaticFileHandler, {"path": str(audit_path / "index.html")})
         (r"/(.*)",
             tornado.web.StaticFileHandler,
             {"path": str(audit_path)},
@@ -43,7 +43,7 @@ application = tornado.web.Application(
         #     {"path": str(audit_path / "img")},
         # ),
     ],
-    static_path=audit_path,
+    static_path=static_path,
     autoreload=True,
 )
 port = 8888

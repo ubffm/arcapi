@@ -8,6 +8,7 @@ import libaaron
 
 from arc import picaqueries, filters, solrtools
 from arc.decode import debracket
+from arcapi import config
 import arc.config
 import deromanize
 from deromanize.keygenerator import CombinatorialExplosion
@@ -603,7 +604,7 @@ class SubmitHandler(tornado.web.RequestHandler):
 class GUIHandler(tornado.web.RequestHandler):
     async def get(self):
         with open(
-                arc.config.project_dir / "arcapi" / "static" / "audit" / "index.html"
+                config.project_dir / "arcapi" / "static" / "audit" / "index.html"
         ) as fh:
             page = fh.read()
         self.write(page)

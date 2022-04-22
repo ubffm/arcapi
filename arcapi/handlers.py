@@ -601,8 +601,9 @@ class SubmitHandler(tornado.web.RequestHandler):
 
 
 class GUIHandler(tornado.web.RequestHandler):
-    async def get(self, hairball):
+    async def get(self):
         with open(
-                config.project_dir / "arcapi" / "static" / "audit" / "index.html") as fh:
+                config.project_dir / "arcapi" / "static" / "audit" / "index.html"
+        ) as fh:
             page = fh.read()
         self.write(page)

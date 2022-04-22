@@ -4,6 +4,9 @@ import tornado.web
 from arcapi import config
 from arcapi import handlers
 
+static_path = config.project_dir / "arcapi" / "static"
+audit_path = static_path / "audit"
+
 
 application = tornado.web.Application(
     [
@@ -11,15 +14,25 @@ application = tornado.web.Application(
         (r"/with-replacements/(.*)", handlers.RecordsAndRepsHandler),
         (r"/text/(.*)", handlers.TextHandler),
         (r"/", tornado.web.RedirectHandler, {"url": "/index.html"}),
-        (
-            r"/(.*)",
+        ( r"/(.*)", tornado.web.StaticFileHandler, {"path": str(static_path)}),
+        (r"/audit/(.*)",
             tornado.web.StaticFileHandler,
-            {"path": str(config.project_dir / "arcapi" / "static")},
+            {"path": str(audit_path)},
         ),
         (
-            r"/audit/(.*)",
+            r"/audit/css/(.*)",
             tornado.web.StaticFileHandler,
-            {"path": str(config.project_dir / "arcapi" / "static" / "audit")},
+            {"path": str(audit_path / "css")},
+        ),
+        (
+            r"/audit/js/(.*)",
+            tornado.web.StaticFileHandler,
+            {"path": str(audit_path / "js")},
+        ),
+        (
+            r"/audit/img/(.*)",
+            tornado.web.StaticFileHandler,
+            {"path": str(audit_path / "img")},
         ),
     ]
 )

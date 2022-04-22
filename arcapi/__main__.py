@@ -43,7 +43,7 @@ application = tornado.web.Application(
         #     {"path": str(audit_path / "img")},
         # ),
     ],
-    static_path=static_path,
+    static_path=audit_path,
 )
 port = 8888
 print("now servering on", port)

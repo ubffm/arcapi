@@ -14,7 +14,6 @@ application = tornado.web.Application(
         (r"/with-replacements/(.*)", handlers.RecordsAndRepsHandler),
         (r"/text/(.*)", handlers.TextHandler),
         (r"/", tornado.web.RedirectHandler, {"url": "/static/index.html"}),
-        static_path=static_path,
         # ( r"/(.*)", tornado.web.StaticFileHandler, {"path": str(static_path)}),
         # (r"/audit/(.*)",
         #     tornado.web.StaticFileHandler,
@@ -35,7 +34,8 @@ application = tornado.web.Application(
         #     tornado.web.StaticFileHandler,
         #     {"path": str(audit_path / "img")},
         # ),
-    ]
+    ],
+    static_path=static_path,
 )
 port = 8888
 print("now servering on", port)

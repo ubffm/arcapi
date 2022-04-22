@@ -8,6 +8,8 @@ from arcapi import handlers
 application = tornado.web.Application(
     [
         (r"/api/(.*)", handlers.APIHandler),
+        (r"/with-replacements/(.*)", handlers.RecordsAndRepsHandler),
+        (r"/text/(.*)", handlers.TextHandler),
         (r"/", tornado.web.RedirectHandler, {"url": "/index.html"}),
         (
             r"/(.*)",

@@ -62,6 +62,7 @@ def getsession() -> arc.config.Session:
 
 @execute_once
 def getpool() -> concurrent.futures.ProcessPoolExecutor:
+    # return concurrent.futures.ProcessPoolExecutor(max_workers=1)
     return concurrent.futures.ProcessPoolExecutor()
 
 
@@ -240,20 +241,20 @@ def gettitle(record):
             raise NoTitleGiven(record)
 
 
-InfoPairs = List[Tuple[arc.config.InputInfo, arc.config.ConversionInfo]]
+InfoPair = Tuple[arc.config.InputInfo, arc.config.ConversionInfo]
 
 
 class TitleReplists(NamedTuple):
     type: str
     replists: dict
-    field_infos: InfoPairs
+    field_infos: List[InfoPair]
     non_filing_article: bool
 
 
 NON_FILING = re.compile(r"^\{([Hh]\w*-)(\s*)\}(\s*)")
 
 
-def islatin(infos: InfoPairs):
+def islatin(infos: List[InfoPair]):
     input_info, _ = infos[0]
     return not (input_info.standard == arc.config.Standard.not_latin)
 
@@ -325,9 +326,9 @@ def join_title(main, sub, resp):
     return " ".join(out)
 
 
-async def record_with_results(record, replists_or_error):
+async def record_with_results_and_replists(record, replists_or_error):
     if isinstance(replists_or_error, Exception):
-        return error(repr(replists_or_error), record)
+        return error(repr(replists_or_error), record), None
     title_reps, creator_replists = replists_or_error
     words = words_of_title_replists(title_reps.replists)
     try:
@@ -338,7 +339,7 @@ async def record_with_results(record, replists_or_error):
             )
         )
     except TypeError:
-        return error("NoMainTitle", record)
+        return error("NoMainTitle", record), None
     results = []
     for doc in await query_nli(words):
         try:
@@ -381,7 +382,7 @@ async def record_with_results(record, replists_or_error):
         recommendation = get_recommendation(out)
         out["recommendation"] = recommendation
 
-        return out
+        return out, title_reps.replists
     top = ranked_results[0]
     title = top["title"]
     heb_title = (
@@ -402,7 +403,14 @@ async def record_with_results(record, replists_or_error):
     )
     recommendation = get_recommendation(out)
     out["recommendation"] = recommendation
-    return out
+    return out, title_reps.replists
+
+
+async def record_with_results(record, replists_or_error):
+    result, _ = await record_with_results_and_replists(
+        record, replists_or_error
+    )
+    return result
 
 
 def set_json(handler: tornado.web.RequestHandler):
@@ -440,14 +448,18 @@ def get_recommendation(result):
 
     di = result["diagnostic_info"]
     main_title, subtitle, responsibility = (
-        dd_or_empty(di[x]) for x in ("main_title", "subtitle", "responsibility")
+        dd_or_empty(di[x])
+        for x in ("main_title", "subtitle", "responsibility")
     )
     for_search = []
     if good_for_search(responsibility):
         for_search.append("responsibility")
     if can_display(main_title):
         if can_display(subtitle):
-            return {"display": ["main_title", "subtitle"], "search": for_search}
+            return {
+                "display": ["main_title", "subtitle"],
+                "search": for_search,
+            }
         elif subtitle is None:
             return {"display": ["main_title"], "search": for_search}
     if good_for_search(main_title):
@@ -475,6 +487,24 @@ class APIHandler(tornado.web.RequestHandler):
         self.write("\n]")
 
 
+class RecordsAndRepsHandler(tornado.web.RequestHandler):
+    async def get(self, json_records):
+        set_json(self)
+        records_n_replists = await delegate(
+            json_records2replists, json_records
+        )
+        sep_sym = "["
+        for record, replists_or_error in records_n_replists:
+            self.write(sep_sym)
+            result, reps = await record_with_results_and_replists(
+                record, replists_or_error
+            )
+            result["replists"] = reps
+            self.write(jsonencode(result))
+            sep_sym = "\n,"
+        self.write("\n]")
+
+
 class PPNHandler(tornado.web.RequestHandler):
     async def get(self, ppn):
         try:
@@ -491,8 +521,35 @@ class PPNHandler(tornado.web.RequestHandler):
 
 class TextHandler(tornado.web.RequestHandler):
     async def get(self, text):
-        result = await delegate(text_to_replists, text)
-        self.write(jsonencode(result))
+        set_json(self)
+        try:
+            result, input_info, conversion_info = await delegate(
+                text_to_replists, text
+            )
+        except CombinatorialExplosion as e:
+            self.write(
+                jsonencode(
+                    {
+                        "type": "error",
+                        "message": repr(e),
+                        "input": text,
+                    }
+                )
+            )
+            return
+        diagnostic_info = _merge_d(
+            input_info._asdict(), conversion_info._asdict()
+        )
+        diagnostic_info["standard"] = diagnostic_info["standard"].value
+        self.write(
+            jsonencode(
+                {
+                    "type": "text",
+                    "output": result,
+                    "diagnostic_info": diagnostic_info,
+                }
+            )
+        )
 
 
 class NLIQueryHandler(tornado.web.RequestHandler):
@@ -503,7 +560,9 @@ class NLIQueryHandler(tornado.web.RequestHandler):
 
 class TextAndQueryHandler(tornado.web.RequestHandler):
     async def get(self, text):
-        text, input_info = await delegate(text_to_replists, text)
+        text, input_info, conversion_info = await delegate(
+            text_to_replists, text
+        )
         words = words_of_replists(text)
         results = await query_nli(words)
         self.write(
@@ -511,7 +570,7 @@ class TextAndQueryHandler(tornado.web.RequestHandler):
                 {
                     "conversion": text,
                     "matches": results,
-                    "input_info": input_info._asdict(),
+                    "diagnostic_info": _merge_d(input_info, conversion_info),
                 }
             )
         )

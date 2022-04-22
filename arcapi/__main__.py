@@ -13,27 +13,28 @@ application = tornado.web.Application(
         (r"/api/(.*)", handlers.APIHandler),
         (r"/with-replacements/(.*)", handlers.RecordsAndRepsHandler),
         (r"/text/(.*)", handlers.TextHandler),
-        (r"/", tornado.web.RedirectHandler, {"url": "/index.html"}),
-        ( r"/(.*)", tornado.web.StaticFileHandler, {"path": str(static_path)}),
-        (r"/audit/(.*)",
-            tornado.web.StaticFileHandler,
-            {"path": str(audit_path)},
-        ),
-        (
-            r"/audit/css/(.*)",
-            tornado.web.StaticFileHandler,
-            {"path": str(audit_path / "css")},
-        ),
-        (
-            r"/audit/js/(.*)",
-            tornado.web.StaticFileHandler,
-            {"path": str(audit_path / "js")},
-        ),
-        (
-            r"/audit/img/(.*)",
-            tornado.web.StaticFileHandler,
-            {"path": str(audit_path / "img")},
-        ),
+        (r"/", tornado.web.RedirectHandler, {"url": "/static/index.html"}),
+        static_path=static_path,
+        # ( r"/(.*)", tornado.web.StaticFileHandler, {"path": str(static_path)}),
+        # (r"/audit/(.*)",
+        #     tornado.web.StaticFileHandler,
+        #     {"path": str(audit_path)},
+        # ),
+        # (
+        #     r"/audit/css/(.*)",
+        #     tornado.web.StaticFileHandler,
+        #     {"path": str(audit_path / "css")},
+        # ),
+        # (
+        #     r"/audit/js/(.*)",
+        #     tornado.web.StaticFileHandler,
+        #     {"path": str(audit_path / "js")},
+        # ),
+        # (
+        #     r"/audit/img/(.*)",
+        #     tornado.web.StaticFileHandler,
+        #     {"path": str(audit_path / "img")},
+        # ),
     ]
 )
 port = 8888

@@ -1,2 +1,2 @@
 #!/bin/sh
-venv/bin/python -m arcapi > log 2>&1
+venv/bin/python -m arcapi  2>&1 | tee log

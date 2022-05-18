@@ -1,2 +1,2 @@
 #!/bin/sh
-venv/bin/python -m arcapi
+venv/bin/python -m arcapi > log

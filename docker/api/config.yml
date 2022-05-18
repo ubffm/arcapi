@@ -1,4 +1,4 @@
-cache_db: ./resources/heb_cache.sqlite
+cache_db: resources/heb_cache.sqlite
 pica_db: /dev/null
 
 nli_checker:

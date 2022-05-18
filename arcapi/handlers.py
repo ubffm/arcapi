@@ -471,7 +471,7 @@ def get_recommendation(result):
 
 
 class APIHandler(tornado.web.RequestHandler):
-    async def get(self, json_records):
+    async def do_task(self, json_records):
         set_json(self)
         records_n_replists = await delegate(
             json_records2replists, json_records
@@ -486,6 +486,12 @@ class APIHandler(tornado.web.RequestHandler):
             )
             sep_sym = "\n,"
         self.write("\n]")
+
+    async def get(self, json_records):
+        await self.do_task(json_records)
+
+    async def post(self):
+        await self.do_task(self.request.body.decode('utf8'))
 
 
 class RecordsAndRepsHandler(tornado.web.RequestHandler):
@@ -605,6 +611,7 @@ with open(
         config.project_dir / "arcapi" / "static" / "audit" / "index.html"
 ) as fh:
     gui = fh.read()
+
 
 class GUIHandler(tornado.web.RequestHandler):
     async def get(self):

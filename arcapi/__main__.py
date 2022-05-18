@@ -14,7 +14,9 @@ application = tornado.web.Application(
         (r"/with-replacements/(.*)", handlers.RecordsAndRepsHandler),
         (r"/text/(.*)", handlers.TextHandler),
         (r"/audit", handlers.GUIHandler),
-        (r"/(.*)",
+        (r"/post", handlers.APIHandler),
+        (
+            r"/(.*)",
             tornado.web.StaticFileHandler,
             {"path": str(audit_path)},
         ),

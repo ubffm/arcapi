@@ -257,6 +257,8 @@ NON_FILING = re.compile(r"^\{([Hh]\w*-)(\s*)\}(\s*)")
 
 def islatin(infos: List[InfoPair]):
     input_info, _ = infos[0]
+    if input_info is None:
+        return True
     return not (input_info.standard == arc.config.Standard.not_latin)
 
 

@@ -144,6 +144,11 @@ def format_diagnostic_info(field_infos):
 
 
 def title_to_replist_subfields(title: str):
+    non_filing_article = False
+    non_filing_match = NON_FILING.match(title)
+    if non_filing_match:
+        title = non_filing_match.group(1) + title[non_filing_match.end() :]
+        non_filing_article = non_filing_match
     fields = []
     infos = []
     for t in split_title(title):
@@ -154,7 +159,7 @@ def title_to_replist_subfields(title: str):
             replists, input_info, conversion_info = text_to_replists(t)
             fields.append([r["reps"] for r in replists])
             infos.append((input_info, conversion_info))
-    return solrmarc.RepTitle(*fields), infos
+    return solrmarc.RepTitle(*fields), infos, non_filing_article
 
 
 def has_heb(string: str):
@@ -271,7 +276,7 @@ def record2replist(record: Dict[str, Union[str, List[str]]]):
     if non_filing_match:
         title = non_filing_match.group(1) + title[non_filing_match.end() :]
         non_filing_article = True
-    title_replists, infos = title_to_replist_subfields(title)
+    title_replists, infos, non_filing_article = title_to_replist_subfields(title)
     if not islatin(infos):
         raise NotLatin("the input is not latin script")
     creator_replists = (
@@ -301,6 +306,9 @@ def json_records2replists(json_records: str):
             out.append((record, record2replist(record)))
         except (NoTitleGiven, CombinatorialExplosion, NotLatin) as e:
             out.append((record, e))
+        except Exception:
+            print(record)
+            raise
     return out
 
 
@@ -370,7 +378,7 @@ async def record_with_results_and_replists(record, replists_or_error):
             for result in results:
                 result["title"] = [t.joined for t in result["title"]]
             top = results[0]
-            title = top["title"]
+            title = top["title"][0]
             link = nli_template.format(top["identifier"])
         else:
             title, link = None, None
@@ -528,6 +536,16 @@ class PPNHandler(tornado.web.RequestHandler):
         self.write(jsonencode(result))
 
 
+def mk_error(exception, input):
+    return jsonencode(
+        {
+            "type": "error",
+            "message": repr(exception),
+            "input": input,
+        }
+    )
+
+
 class TextHandler(tornado.web.RequestHandler):
     async def get(self, text):
         set_json(self)
@@ -536,15 +554,7 @@ class TextHandler(tornado.web.RequestHandler):
                 text_to_replists, text
             )
         except CombinatorialExplosion as e:
-            self.write(
-                jsonencode(
-                    {
-                        "type": "error",
-                        "message": repr(e),
-                        "input": text,
-                    }
-                )
-            )
+            self.write(mk_error(e, text))
             return
         diagnostic_info = _merge_d(
             input_info._asdict(), conversion_info._asdict()
@@ -559,6 +569,13 @@ class TextHandler(tornado.web.RequestHandler):
                 }
             )
         )
+
+
+class TitleHandler(tornado.web.RequestHandler):
+    async def get(self, title):
+        # incomplete
+        set_json(self)
+        title_to_replist_subfields(title)
 
 
 class NLIQueryHandler(tornado.web.RequestHandler):

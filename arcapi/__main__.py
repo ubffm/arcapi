@@ -15,6 +15,7 @@ application = tornado.web.Application(
         (r"/text/(.*)", handlers.TextHandler),
         (r"/audit", handlers.GUIHandler),
         (r"/post", handlers.APIHandler),
+        (r"/", handlers.StarpageHandler),
         (
             r"/(.*)",
             tornado.web.StaticFileHandler,

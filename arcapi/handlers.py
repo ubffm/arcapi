@@ -635,3 +635,14 @@ with open(
 class GUIHandler(tornado.web.RequestHandler):
     async def get(self):
         self.write(gui)
+
+
+with open(
+        config.project_dir / "arcapi" / "static" / "index.html"
+) as fh:
+    startpage = fh.read()
+
+
+class StarpageHandler(tornado.web.RequestHandler):
+    async def get(self):
+        self.write(startpage)

@@ -8,7 +8,7 @@ Once one has this converted data, the GUI auditing tool serves two
 purposes:
 
 - It may be used to go over the output so you can have confidence that
-  the quality of the conversion is good---that verified titles are
+  the quality of the conversion is good--that verified titles are
   correct in more than 99% of cases and that unverified conversions
   marked for searchable fields are good enough to serve their purpose.
 - It may be used to manually verify or correct titles which could not
@@ -97,7 +97,7 @@ The default setting, shown here, keeps only those records of the
 .. image:: ./img/filter-tab-types.png
 
 This is because the *verified* results are so frequently correct that
-it is not much need to audit them---though one may do so if they would
+it is not much need to audit them--though one may do so if they would
 like to see the reason for our confidence in these titles. The titles
 which caused errors within the API are also left out by default, but
 they can be included as well, at the user's option.

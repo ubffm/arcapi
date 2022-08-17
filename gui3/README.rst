@@ -62,7 +62,7 @@ available, but let's continue to look at the input tab for a moment.
 .. image:: ./img/input-tab.png
 
 You can load data by opening a file from your computer with the
-"Browse" button, but the webpage may stall if you try to load too many
+*browse* button, but the webpage may stall if you try to load too many
 records at once. I typically limit my input files to 500 records a
 peice, but one can normally load several thousand records at once. The
 number of records you can load depends on the capabilities of your
@@ -97,14 +97,17 @@ The default setting, shown here, keeps only those records of the
 .. image:: ./img/filter-tab-types.png
 
 This is because the *verified* results are so frequently correct that
-it is not much need to audit them--though one may do so if they would
-like to see the reason for our confidence in these titles. The titles
-which caused errors within the API are also left out by default, but
-they can be included as well, at the user's option.
+there it is not much need to audit them--though one may do so if they
+would like to see the reason for our confidence in these
+conversions. The titles which caused errors within the API are also
+left out by default, but they can be included as well, at the user's
+option.
 
 In addition, we also remove some titles from the audit which we
-believe are very unlikely to be Hebrew.
-d
+believe are very unlikely to be Hebrew by default. This option can be
+unchecked to allow the titles which do not appear to be Hebrew as
+well.
+
 .. image:: ./img/filter-tab-transliterated-only.png
 
 This looks at the characters contained in the title and judges whether
@@ -122,7 +125,7 @@ transliteration.
 You can also filter records for the audit according to what was
 recommended to do with them.
 
-.. image:: ./img/filter-tab-recommednations.png
+.. image:: ./img/filter-tab-recommendations.png
 
 Title transformations which could not be automatically verified may
 still be useful. For example, while we may hesitate to make it the
@@ -131,10 +134,10 @@ be useful to index it for the catalog search. It may also at times be
 good enough that we wish to display it to the user.
 
 One may want to use the auditing tool to confirm that the generated
-Hebrew is fit to be be used in the way we suggest. Alternatively, one
+Hebrew is fit to be used in the way we suggest. Alternatively, one
 may want to use it in this way automatically and simply use the tool
 to see what can be salvaged from those titles with no
-recommednations.
+recommendations.
 
 Below the filter options, there are tiles displaying the titles those
 titles which the filter will keep and those which will be removed when
@@ -147,7 +150,7 @@ Audit Individual Records
 ------------------------
 
 The audit interface is where the user can check records to see how the
-conversion was performed. It may look slightly different depeding on
+conversion was performed. It may look slightly different depending on
 the type of the input record.
 
 

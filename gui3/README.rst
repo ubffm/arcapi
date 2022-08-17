@@ -257,11 +257,11 @@ right in the list.
 Once the title has been corrected, use the *accept edited Hebrew*
 button to confirm what has been done and move on to the next title.
 
-    If the standard editor is too complicated, gets in the way, or is
-    simply unavailable due to technical issues, the simple editor is
-    always available by selecting *use simple editor*.
+If the standard editor is too complicated, gets in the way, or is
+simply unavailable due to technical issues, the simple editor is
+always available by selecting *use simple editor*.
 
-    .. image:: ./img/audit-simple-editor.png
+.. image:: ./img/audit-simple-editor.png
 
 Using this interface, the suggested conversion of the full title
 simply appears in a text box where it can be updated as required.
@@ -281,7 +281,7 @@ converted along with the manner of their approval or rejection.
 Below this is another *export audited* button which will download a
 json file containing the audited records. These records conform to the
 same schema as the API output, but they have an addition field called
-``audit result``. This ``audit_result`` has two subfields:
+``audit__esult``. This ``audit_result`` has two subfields:
 
 - ``type`` describes the the manner in which the title was accepted
   (or rejected)

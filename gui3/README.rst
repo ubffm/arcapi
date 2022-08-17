@@ -226,11 +226,11 @@ Finally come the buttons for actual use in the audit.
 The *Edit Title* Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ddWhen the *edit title* action is used, a editing interface will appear
+When the *edit title* action is used, a editing interface will appear
 below the audit interface.
 
-  Note: The simple editor may be loaded instead if the api server is
-  unreachable or another problem occured. The simple editor shall be
+  Note: The simple editor may be loaded instead if the API server is
+  unreachable or another problem occurred. The simple editor shall be
   described shortly.
 
 .. image:: ./img/audit-editor.png

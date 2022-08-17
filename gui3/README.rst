@@ -64,7 +64,7 @@ available, but let's continue to look at the input tab for a moment.
 You can load data by opening a file from your computer with the
 *browse* button, but the webpage may stall if you try to load too many
 records at once. I typically limit my input files to 500 records a
-peice, but one can normally load several thousand records at once. The
+piece, but one can normally load several thousand records at once. The
 number of records you can load depends on the capabilities of your
 computer.
 
@@ -180,7 +180,7 @@ looks like this:
 .. image:: ./img/audit-error.png
 
 In this case we see that the title is already Hebrew and therefore
-there is no need to convert it. Many of the options disapear with
+there is no need to convert it. Many of the options disappear with
 error titles, and there is little you can do but reject them.
 
 Common Audit Features
@@ -207,7 +207,7 @@ from the National Library of Israel's catalog at the moment).
 
 .. image:: ./img/audit-query-result.png
 
-This will be labled as "matched title" with a verified conversion and
+This will be labeled as "matched title" with a verified conversion and
 as "top query result" with an unverified conversion.
 
 Finally come the buttons for actual use in the audit.
@@ -275,7 +275,7 @@ to see the audit results so far.
 
 .. image:: ./img/export-audited.png
 
-First appears the list of audited titles with the transilerated and
+First appears the list of audited titles with the transliterated and
 converted along with the manner of their approval or rejection.
 
 Below this is another *export audited* button which will download a

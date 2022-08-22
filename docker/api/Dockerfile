@@ -1,8 +1,8 @@
-FROM ubuntu:20.04 as build
+FROM ubuntu:22.04 as build
 # install deps
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
-        python3-pip python3.8-venv python3-dev hspell git gcc
+        python3-pip python3.10-venv python3-dev hspell git gcc
 
 # set up app user
 RUN mkdir -p /home/app
@@ -24,7 +24,7 @@ USER app
 RUN ./project_setup.sh
 
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 # install deps
 RUN apt-get update && \
     apt-get install --no-install-recommends -y hspell python3

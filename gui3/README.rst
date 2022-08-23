@@ -281,7 +281,7 @@ converted along with the manner of their approval or rejection.
 Below this is another *export audited* button which will download a
 json file containing the audited records. These records conform to the
 same schema as the API output, but they have an addition field called
-``audit__esult``. This ``audit_result`` has two subfields:
+``audit_result``. This ``audit_result`` has two subfields:
 
 - ``type`` describes the the manner in which the title was accepted
   (or rejected)

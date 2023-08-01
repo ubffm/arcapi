@@ -21,8 +21,8 @@ RUN chown -R app:app $APP_HOME
 USER app
 
 # download and configure solr
-ENV SOLR_VERSION=8.10.1
+ENV SOLR_VERSION=8.11.2
 RUN ./download-solr.sh $SOLR_VERSION && \
     ./configure_cores.sh $SOLR_VERSION nlibooks nliauth
 
-CMD ["solr-8.10.1/bin/solr", "start", "-f"]
+CMD ["solr-8.11.2/bin/solr", "start", "-f"]

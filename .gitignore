@@ -129,3 +129,6 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+./docker/bitnami-container-credentials.txt
+

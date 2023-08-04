@@ -1,4 +1,6 @@
 FROM ubuntu:20.04
+ARG SOLR_URL
+RUN echo $SOLR_URL
 
 # install deps
 RUN apt-get update && \
@@ -21,8 +23,7 @@ RUN chown -R app:app $APP_HOME
 USER app
 
 # download and configure solr
-ENV SOLR_VERSION=8.10.1
-RUN ./download-solr.sh $SOLR_VERSION && \
-    ./configure_cores.sh $SOLR_VERSION nlibooks nliauth
+RUN ./download-solr.sh $SOLR_URL && \
+    ./configure_cores.sh nlibooks nliauth
 
-CMD ["solr-8.10.1/bin/solr", "start", "-f"]
+CMD ["solr/bin/solr", "start", "-f"]

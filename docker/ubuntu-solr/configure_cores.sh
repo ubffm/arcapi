@@ -1,7 +1,5 @@
 #!/bin/sh
-VERSION="$1"
-shift
-SOLR_HOME="solr-$VERSION"
+SOLR_HOME="solr"
 SOLR_BIN="$SOLR_HOME/bin/solr"
 
 echo "SOLR_ULIMIT_CHECKS=false" > "$SOLR_HOME/bin/solr.in.sh"

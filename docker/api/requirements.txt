@@ -1,2 +1,2 @@
 wheel
-cython
+cython==0.29.36

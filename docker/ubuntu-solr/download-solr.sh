@@ -1,7 +1,7 @@
 #!/bin/sh
-VERSION="$1"
-SOLR_HOME="solr-$VERSION"
-wget "https://dlcdn.apache.org/lucene/solr/$VERSION/$SOLR_HOME.tgz" || exit 1
-sha512sum --check shasum.txt --ignore-missing || exit 1
-tar xaf "$SOLR_HOME.tgz" || exit 1
-rm "$SOLR_HOME.tgz"
+SOLR_URL="$1"
+wget "$SOLR_URL" || exit 1
+mv solr*.tgz* solr.tgz
+tar xaf solr.tgz || exit 1
+rm solr.tgz
+ln -s "$PWD"/solr* solr

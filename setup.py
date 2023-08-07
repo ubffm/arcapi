@@ -14,7 +14,7 @@ setup(
         "pica_parse @ git+https://github.com/FID-Judaica/pica_parse.py.git",
         "arc @ git+https://github.com/FID-Judaica/goethe-university-library-arc.git",
         "compose-struct @ git+https://github.com/ninjaaron/compose-struct.git",
-        # "cython==0.29.36",
-        # "HspellPy",
+        "cython==0.29.36",
+        "HspellPy",
     ],
 )

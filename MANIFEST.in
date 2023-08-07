@@ -1,1 +1,2 @@
-recursive-include static
+graft arcapi
+global-exclude *.py[cod]

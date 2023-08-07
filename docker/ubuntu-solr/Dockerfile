@@ -1,10 +1,10 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 ARG SOLR_URL
 RUN echo $SOLR_URL
 
 # install deps
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y openjdk-16-jre-headless wget
+    apt-get install --no-install-recommends -y openjdk-19-jre-headless wget
 
 # set up app user
 RUN mkdir -p /home/app
@@ -23,7 +23,6 @@ RUN chown -R app:app $APP_HOME
 USER app
 
 # download and configure solr
-<<<<<<< HEAD
 RUN ./download-solr.sh $SOLR_URL && \
     ./configure_cores.sh nlibooks nliauth
 

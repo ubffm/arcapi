@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+
+  solr:
+    image: ubuntu-solr:9.3.0
+    volumes:
+      - nlidb:/home/app/project-dir/solr/server/solr
+    expose:
+      - 8983
+    ports:
+      - 8983:8983
+
+volumes:
+  nlidb:

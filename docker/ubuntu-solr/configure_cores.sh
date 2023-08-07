@@ -2,7 +2,8 @@
 SOLR_HOME="solr"
 SOLR_BIN="$SOLR_HOME/bin/solr"
 
-echo "SOLR_ULIMIT_CHECKS=false" > "$SOLR_HOME/bin/solr.in.sh"
+echo 'SOLR_ULIMIT_CHECKS=false
+SOLR_JETTY_HOST="0.0.0.0"' > "$SOLR_HOME/bin/solr.in.sh"
 
 "$SOLR_BIN" start || exit 1
 while [ -n "$1" ]; do
@@ -16,3 +17,4 @@ done
 cp ./configs/solr.xml "$SOLR_HOME/server/solr/solr.xml"
 
 "$SOLR_BIN" stop
+

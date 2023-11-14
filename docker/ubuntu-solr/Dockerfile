@@ -26,4 +26,5 @@ USER app
 RUN ./download-solr.sh $SOLR_URL && \
     ./configure_cores.sh nlibooks nliauth
 
+
 CMD ["solr/bin/solr", "start", "-f"]

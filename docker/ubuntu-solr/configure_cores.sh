@@ -17,4 +17,5 @@ done
 cp ./configs/solr.xml "$SOLR_HOME/server/solr/solr.xml"
 
 "$SOLR_BIN" stop
+cp -rp "$SOLR_HOME/server/solr" ~/project-dir/original-config
 

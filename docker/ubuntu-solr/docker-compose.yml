@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   solr:
-    image: ubuntu-solr:9.3.0
+    image: ubuntu-solr:9.3.0-aaron3
     volumes:
       - nlidb:/home/app/project-dir/solr/server/solr
     expose:
